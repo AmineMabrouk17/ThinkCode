@@ -131,3 +131,48 @@ export interface Review {
   reviewed_at: string;
   next_review_at: string | null;
 }
+
+/** Problem counts per status, from a single `GROUP BY status` query. */
+export type ProblemStatusCounts = Record<ProblemStatus, number>;
+
+/** A problem flagged for review, or with an overdue review schedule. */
+export interface ReviewDueProblem {
+  id: string;
+  title: string;
+  category: string;
+  difficulty: Difficulty;
+  status: ProblemStatus;
+  /** Most recent `reviews.reviewed_at` for the problem, if any. */
+  last_reviewed_at: string | null;
+  /** Whole days since `last_reviewed_at`, null when never reviewed. */
+  days_since_review: number | null;
+  /** Earliest overdue `reviews.next_review_at`, null when only the status is due. */
+  due_at: string | null;
+}
+
+/** A note joined with the title of the problem it belongs to. */
+export interface RecentNote {
+  id: string;
+  problem_id: string;
+  title: string;
+  type: NoteType;
+  created_at: string;
+  problem_title: string;
+}
+
+/** A pattern with the number of problems linked through `problem_patterns`. */
+export interface PatternWithCount extends Pattern {
+  problem_count: number;
+}
+
+/** Everything the dashboard renders, fetched in one pass. */
+export interface DashboardData {
+  /** Total problems = sum of `counts`. */
+  total: number;
+  counts: ProblemStatusCounts;
+  /** Problems that are not mastered yet, most recently updated first. */
+  continueLearning: Problem[];
+  needsReview: ReviewDueProblem[];
+  recentNotes: RecentNote[];
+  topPatterns: PatternWithCount[];
+}
