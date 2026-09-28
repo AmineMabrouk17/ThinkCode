@@ -1,0 +1,28 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": ".open-next/worker.js",
+	"name": "thinkcode",
+	"compatibility_date": "2026-08-01",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			// Self-reference service binding, the service name must match the worker name
+			// see https://opennext.js.org/cloudflare/caching
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "thinkcode"
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "thinkcode-db",
+			// TODO: create the remote database with `wrangler d1 create thinkcode-db`
+			// and replace this placeholder ID with the real one.
+			"database_id": "73abacce-b3ee-4901-8b34-719bf3173c8a"
+		}
+	]
+}
