@@ -165,6 +165,11 @@ export interface PatternWithCount extends Pattern {
   problem_count: number;
 }
 
+/** A tag with the number of problems linked through `problem_tags`. */
+export interface TagWithCount extends Tag {
+  problem_count: number;
+}
+
 /** Everything the dashboard renders, fetched in one pass. */
 export interface DashboardData {
   /** Total problems = sum of `counts`. */
@@ -248,4 +253,40 @@ export interface ProblemFormState {
   fieldErrors?: Partial<Record<ProblemField, string>>;
   /** Set once the problem exists, so the form can navigate to it. */
   problemId?: string;
+}
+
+// ---- pattern library --------------------------------------------
+
+/** Validated, normalized pattern payload for creation. */
+export interface PatternInput {
+  name: string;
+  category: string;
+  description: string | null;
+  mentalModel: string | null;
+  /** Newline-separated list of signals. */
+  commonSignals: string | null;
+}
+
+/** Form fields of the pattern form that can carry a validation error. */
+export type PatternField =
+  | "name"
+  | "category"
+  | "description"
+  | "mentalModel"
+  | "commonSignals";
+
+/** Result of `createPattern`, consumed by `useActionState`. */
+export interface PatternFormState {
+  status: "idle" | "error" | "success";
+  /** General (non field-specific) message. */
+  message?: string;
+  fieldErrors?: Partial<Record<PatternField, string>>;
+  /** Set once the pattern exists, so the form can open its page. */
+  slug?: string;
+}
+
+/** Result of `updatePatternMentalModel`, consumed by `useActionState`. */
+export interface MentalModelFormState {
+  status: "idle" | "error" | "success";
+  message?: string;
 }

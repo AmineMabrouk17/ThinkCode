@@ -12,6 +12,7 @@ import type {
   DashboardData,
   Note,
   Pattern,
+  PatternInput,
   PatternWithCount,
   Problem,
   ProblemFilters,
@@ -26,6 +27,7 @@ import type {
   ReviewDueProblem,
   Solution,
   Tag,
+  TagWithCount,
   ThinkingSession,
   Visualization,
 } from "@/types";
@@ -496,10 +498,121 @@ export function listPatterns(): Promise<Pattern[]> {
   return all<Pattern>("SELECT * FROM patterns ORDER BY category, name");
 }
 
+/**
+ * The pattern library query: every pattern with how many problems use it.
+ * The optional `category` filter is case-insensitive, like the problem
+ * category filter. `LEFT JOIN` keeps patterns with no problems at 0.
+ */
+export function listPatternsWithCounts(category?: string): Promise<PatternWithCount[]> {
+  const filter = category?.trim();
+  const where = filter ? "WHERE LOWER(p.category) = ?" : "";
+
+  return all<PatternWithCount>(
+    `SELECT p.*, COUNT(pp.problem_id) AS problem_count
+     FROM patterns p
+     LEFT JOIN problem_patterns pp ON pp.pattern_id = p.id
+     ${where}
+     GROUP BY p.id
+     ORDER BY p.category, p.name`,
+    ...(filter ? [filter.toLowerCase()] : [])
+  );
+}
+
+/** Distinct pattern categories, for the library filter chips. */
+export function listPatternCategories(): Promise<string[]> {
+  return all<{ category: string }>(
+    "SELECT DISTINCT category FROM patterns WHERE category <> '' ORDER BY category COLLATE NOCASE"
+  ).then((rows) => rows.map((row) => row.category));
+}
+
+export function getPatternBySlug(slug: string): Promise<Pattern | null> {
+  return first<Pattern>("SELECT * FROM patterns WHERE slug = ?", slug);
+}
+
+/** Problems linked to a pattern, with their own patterns/tags attached. */
+export function getPatternProblems(slug: string): Promise<ProblemWithMeta[]> {
+  return all<Problem>(
+    `SELECT p.*
+     FROM problems p
+     JOIN problem_patterns pp ON pp.problem_id = p.id
+     JOIN patterns pat ON pat.id = pp.pattern_id
+     WHERE pat.slug = ?
+     ORDER BY p.updated_at DESC, p.title ASC`,
+    slug
+  ).then((rows) => attachMeta(rows));
+}
+
+/** Siblings of a pattern: same category, optionally excluding itself. */
+export function listPatternsByCategory(
+  category: string,
+  excludeSlug?: string,
+  limit = 8
+): Promise<PatternWithCount[]> {
+  const exclude = excludeSlug ? "AND p.slug != ?" : "";
+
+  return all<PatternWithCount>(
+    `SELECT p.*, COUNT(pp.problem_id) AS problem_count
+     FROM patterns p
+     LEFT JOIN problem_patterns pp ON pp.pattern_id = p.id
+     WHERE LOWER(p.category) = ? ${exclude}
+     GROUP BY p.id
+     ORDER BY problem_count DESC, p.name ASC
+     LIMIT ?`,
+    category.toLowerCase(),
+    ...(excludeSlug ? [excludeSlug] : []),
+    limit
+  );
+}
+
+/**
+ * Insert a pattern. The slug is derived from the name here, so callers that
+ * need it beforehand should slugify the same name and check for a clash.
+ */
+export async function insertPattern(input: PatternInput): Promise<string> {
+  const id = crypto.randomUUID();
+
+  await run(
+    `INSERT INTO patterns (id, name, slug, category, description, mental_model, common_signals)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    id,
+    input.name,
+    slugify(input.name),
+    input.category,
+    input.description,
+    input.mentalModel,
+    input.commonSignals
+  );
+
+  return id;
+}
+
+/** Inline edit of the knowledge page: only the mental model is editable. */
+export function updatePatternMentalModel(
+  id: string,
+  mentalModel: string | null
+): Promise<boolean> {
+  return run(
+    "UPDATE patterns SET mental_model = ? WHERE id = ?",
+    mentalModel,
+    id
+  ).then((result) => result.meta.changes > 0);
+}
+
 // ---- tags --------------------------------------------------------
 
 export function listTags(): Promise<Tag[]> {
   return all<Tag>("SELECT * FROM tags ORDER BY name");
+}
+
+/** Every tag with how many problems carry it, most used first. */
+export function listTagCounts(): Promise<TagWithCount[]> {
+  return all<TagWithCount>(
+    `SELECT t.*, COUNT(pt.problem_id) AS problem_count
+     FROM tags t
+     LEFT JOIN problem_tags pt ON pt.tag_id = t.id
+     GROUP BY t.id
+     ORDER BY problem_count DESC, t.name ASC`
+  );
 }
 
 // ---- per-problem records ------------------------------------------

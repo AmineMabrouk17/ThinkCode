@@ -69,6 +69,9 @@ export const MAX_SHORT_LENGTH = 60;
 export const MAX_DESCRIPTION_LENGTH = 5000;
 export const MAX_TAGS = 20;
 export const MAX_TAG_LENGTH = 40;
+export const MAX_MENTAL_MODEL_LENGTH = 2000;
+export const MAX_SIGNALS = 20;
+export const MAX_SIGNAL_LENGTH = 160;
 
 export function isDifficulty(value: string): value is Difficulty {
   return (DIFFICULTIES as readonly string[]).includes(value);
