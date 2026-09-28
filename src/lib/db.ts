@@ -3,6 +3,12 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type {
   Pattern,
   Problem,
+  ProblemStatus,
+  ProblemStatusCounts,
+  ReviewDueProblem,
+  RecentNote,
+  PatternWithCount,
+  DashboardData,
   Tag,
   ThinkingSession,
   Note,
@@ -128,5 +134,124 @@ export function listAiConversations(
   return all<AiConversation>(
     "SELECT * FROM ai_conversations WHERE problem_id = ? ORDER BY created_at DESC",
     problemId
+  );
+}
+
+// ---- dashboard ----------------------------------------------------
+
+/** One aggregated query instead of one count per status. */
+export function countProblemsByStatus(): Promise<ProblemStatusCounts> {
+  return all<{ status: ProblemStatus; n: number }>(
+    "SELECT status, COUNT(*) AS n FROM problems GROUP BY status"
+  ).then((rows) => {
+    const counts: ProblemStatusCounts = {
+      learning: 0,
+      understood: 0,
+      review: 0,
+      confusing: 0,
+      mastered: 0,
+    };
+    for (const row of rows) {
+      if (row.status in counts) counts[row.status] = row.n;
+    }
+    return counts;
+  });
+}
+
+/** Problems still in progress, most recently touched first. */
+export function listContinueLearning(limit = 3): Promise<Problem[]> {
+  return all<Problem>(
+    "SELECT * FROM problems WHERE status != 'mastered' ORDER BY updated_at DESC, created_at DESC, title ASC LIMIT ?",
+    limit
+  );
+}
+
+/**
+ * Problems awaiting a revisit: flagged with `status = 'review'` or holding a
+ * review whose `next_review_at` has passed. Most overdue first.
+ */
+export function listProblemsDueForReview(
+  limit = 4
+): Promise<ReviewDueProblem[]> {
+  return all<ReviewDueProblem>(
+    `SELECT
+       p.id,
+       p.title,
+       p.category,
+       p.difficulty,
+       p.status,
+       (SELECT MAX(r.reviewed_at) FROM reviews r WHERE r.problem_id = p.id) AS last_reviewed_at,
+       CAST(
+         julianday('now') - julianday((SELECT MAX(r.reviewed_at) FROM reviews r WHERE r.problem_id = p.id))
+         AS INTEGER
+       ) AS days_since_review,
+       (
+         SELECT MIN(r.next_review_at) FROM reviews r
+         WHERE r.problem_id = p.id
+           AND r.next_review_at IS NOT NULL
+           AND r.next_review_at <= datetime('now')
+       ) AS due_at
+     FROM problems p
+     WHERE p.status = 'review'
+        OR EXISTS (
+          SELECT 1 FROM reviews r
+          WHERE r.problem_id = p.id
+            AND r.next_review_at IS NOT NULL
+            AND r.next_review_at <= datetime('now')
+        )
+     ORDER BY due_at IS NULL, COALESCE(due_at, p.updated_at) ASC
+     LIMIT ?`,
+    limit
+  );
+}
+
+/** The newest notes across every problem, with their problem titles. */
+export function listRecentNotes(limit = 4): Promise<RecentNote[]> {
+  return all<RecentNote>(
+    `SELECT
+       n.id,
+       n.problem_id,
+       n.title,
+       n.type,
+       n.created_at,
+       p.title AS problem_title
+     FROM notes n
+     JOIN problems p ON p.id = n.problem_id
+     ORDER BY n.updated_at DESC, n.created_at DESC
+     LIMIT ?`,
+    limit
+  );
+}
+
+/** Patterns ranked by how many problems use them. */
+export function listTopPatterns(limit = 6): Promise<PatternWithCount[]> {
+  return all<PatternWithCount>(
+    `SELECT p.*, COUNT(pp.problem_id) AS problem_count
+     FROM patterns p
+     LEFT JOIN problem_patterns pp ON pp.pattern_id = p.id
+     GROUP BY p.id
+     ORDER BY problem_count DESC, p.name ASC
+     LIMIT ?`,
+    limit
+  );
+}
+
+/** Everything the dashboard needs, in a single round of queries. */
+export function getDashboardData(): Promise<DashboardData> {
+  return Promise.all([
+    countProblemsByStatus(),
+    listContinueLearning(),
+    listProblemsDueForReview(),
+    listRecentNotes(),
+    listTopPatterns(),
+  ]).then(
+    ([counts, continueLearning, needsReview, recentNotes, topPatterns]) => ({
+      total: Object.values(counts).reduce((sum, n) => sum + n, 0),
+      counts,
+      continueLearning,
+      needsReview,
+      recentNotes,
+      topPatterns,
+    })
   );
 }
