@@ -1741,3 +1741,54 @@ That is the ultimate goal:
 ```
 
 **ThinkCode is where your algorithm-solving journey becomes your personal knowledge base.**
+
+---
+
+# 🛠️ Development
+
+## Stack
+
+| Layer      | Choice                                                             |
+| ---------- | ------------------------------------------------------------------ |
+| Framework  | Next.js 16 (App Router) + TypeScript + Tailwind CSS v4 + Turbopack  |
+| Deployment | Cloudflare Workers via `@opennextjs/cloudflare`                     |
+| Database   | Cloudflare D1 (`DB` binding, database `thinkcode-db`)               |
+
+## Getting started
+
+```bash
+npm install
+
+# Local database — applies migrations + seed to local (miniflare) D1
+npm run db:migrate:local
+
+# Develop — next dev proxies D1/bindings through wrangler
+npm run dev
+```
+
+> The remote D1 database is referenced in `wrangler.jsonc`. Run
+> `wrangler d1 create thinkcode-db`, then paste the printed `database_id`
+> into `wrangler.jsonc` before deploying.
+
+## Scripts
+
+| Script                   | What it does                                            |
+| ------------------------ | ------------------------------------------------------- |
+| `npm run dev`            | Local dev server (D1 proxied via wrangler)              |
+| `npm run lint`           | ESLint                                                  |
+| `npm run typecheck`      | `tsc --noEmit`                                          |
+| `npm run build`          | `next build` (Turbopack)                                |
+| `npm run preview`        | Build the OpenNext worker and preview it with wrangler  |
+| `npm run deploy`         | Build + deploy the worker to Cloudflare                 |
+| `npm run cf-typegen`     | Regenerate `worker-configuration.d.ts` from wrangler    |
+| `npm run db:migrate:local`  | Apply migrations + seed to local D1                  |
+| `npm run db:migrate:remote` | Apply migrations + seed to remote D1                 |
+
+## Migrations
+
+Numbered SQL files live in `migrations/` and are applied in order:
+
+```bash
+npm run db:migrate:local   # local miniflare D1
+npm run db:migrate:remote  # remote Cloudflare D1
+```
