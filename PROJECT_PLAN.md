@@ -5,7 +5,7 @@ Stack: Next.js (App Router, TypeScript) + Tailwind CSS + Cloudflare D1 + OpenNex
 Each feature: dedicated branch → subagent implementation → PR → validate → merge → next.
 
 - [x] Repo setup (README on main)
-- [ ] feat/1-foundation — Next.js + Tailwind + OpenNext/Cloudflare scaffold, D1 schema + seed, design system, app shell, navigation
+- [x] feat/1-foundation — Next.js + Tailwind + OpenNext/Cloudflare scaffold, D1 schema + seed, design system, app shell, navigation
 - [ ] feat/2-dashboard — Dashboard: stats, continue learning, recent, needs review, patterns overview
 - [ ] feat/3-problems — Problem library: list, search/filters, create/edit/delete, problem detail page
 - [ ] feat/4-patterns-tags — Patterns library + pattern detail knowledge pages, tags CRUD
