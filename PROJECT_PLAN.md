@@ -7,7 +7,7 @@ Each feature: dedicated branch → subagent implementation → PR → validate �
 - [x] Repo setup (README on main)
 - [x] feat/1-foundation — Next.js + Tailwind + OpenNext/Cloudflare scaffold, D1 schema + seed, design system, app shell, navigation
 - [x] feat/2-dashboard — Dashboard: stats, continue learning, recent, needs review, patterns overview
-- [ ] feat/3-problems — Problem library: list, search/filters, create/edit/delete, problem detail page
+- [x] feat/3-problems — Problem library: list, search/filters, create/edit/delete, problem detail page
 - [ ] feat/4-patterns-tags — Patterns library + pattern detail knowledge pages, tags CRUD
 - [ ] feat/5-thinking — Thinking timer (configurable), thinking sessions, initial thoughts, session history
 - [ ] feat/6-knowledge — Markdown notes: mental model, key lessons, mistakes (editor + preview)
