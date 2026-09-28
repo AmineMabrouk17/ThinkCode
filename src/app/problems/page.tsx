@@ -156,8 +156,14 @@ export default async function ProblemsPage({
             it easier to recognise next time.
           </p>
         </div>
-        <div>
+        <div className="flex flex-wrap items-center gap-3">
           <NewProblemButton patterns={patterns} tags={tags} />
+          <Link
+            href="/tags"
+            className="text-sm font-medium text-accent hover:text-indigo-300"
+          >
+            Browse tags <span aria-hidden>→</span>
+          </Link>
         </div>
       </header>
 
