@@ -176,3 +176,76 @@ export interface DashboardData {
   recentNotes: RecentNote[];
   topPatterns: PatternWithCount[];
 }
+
+// ---- problem library --------------------------------------------
+
+/** A problem plus the patterns and tags linked through the join tables. */
+export interface ProblemWithMeta extends Problem {
+  patterns: Pattern[];
+  tags: Tag[];
+}
+
+/**
+ * Filters for the problem library. They map 1:1 to the URL search params of
+ * `/problems` (`?q=&platform=&difficulty=&category=&pattern=&status=&tag=`),
+ * which keeps every view shareable and server-rendered.
+ */
+export interface ProblemFilters {
+  /** Free text, matched against title + description. */
+  q?: string;
+  platform?: string;
+  difficulty?: Difficulty;
+  category?: string;
+  /** Pattern **slug**. */
+  pattern?: string;
+  status?: ProblemStatus;
+  /** Tag **slug**. */
+  tag?: string;
+}
+
+/** Validated, normalized problem payload for create/update. */
+export interface ProblemInput {
+  title: string;
+  platform: string;
+  externalUrl: string | null;
+  difficulty: Difficulty;
+  category: string;
+  status: ProblemStatus;
+  description: string | null;
+  /** Existing pattern ids. Unknown ids are ignored when linking. */
+  patternIds: string[];
+  /** Tag names — existing ones are reused, new ones are created on the fly. */
+  tags: string[];
+}
+
+/** The per-problem records rendered as the read-only section lists. */
+export interface ProblemRecords {
+  sessions: ThinkingSession[];
+  aiConversations: AiConversation[];
+  resources: Resource[];
+  visualizations: Visualization[];
+  notes: Note[];
+  solutions: Solution[];
+  reviews: Review[];
+}
+
+/** Form fields that can carry a validation error. */
+export type ProblemField =
+  | "title"
+  | "platform"
+  | "externalUrl"
+  | "difficulty"
+  | "category"
+  | "status"
+  | "description"
+  | "tags";
+
+/** Result of the create/update form actions, consumed by `useActionState`. */
+export interface ProblemFormState {
+  status: "idle" | "error" | "success";
+  /** General (non field-specific) message. */
+  message?: string;
+  fieldErrors?: Partial<Record<ProblemField, string>>;
+  /** Set once the problem exists, so the form can navigate to it. */
+  problemId?: string;
+}
