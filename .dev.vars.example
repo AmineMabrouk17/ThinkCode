@@ -1,0 +1,3 @@
+# Local development variables loaded by the OpenNext Cloudflare platform proxy.
+# Copy to `.dev.vars` (already exists in this repo) and adjust as needed.
+NEXTJS_ENV=development
