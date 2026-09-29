@@ -136,6 +136,58 @@ export const MAX_NOTE_CONTENT_LENGTH = 20000;
 /** How much of a note the `/knowledge` card shows before the Read toggle. */
 export const NOTE_EXCERPT_LENGTH = 180;
 
+// ---- solutions ----------------------------------------------------
+
+/**
+ * Languages the solution editor speaks. Kept short and practical: the ones a
+ * learner actually writes NeetCode-style solutions in.
+ */
+export const LANGUAGES = [
+  "python",
+  "javascript",
+  "typescript",
+  "java",
+  "cpp",
+  "c",
+  "go",
+  "rust",
+  "ruby",
+  "swift",
+  "kotlin",
+] as const;
+
+export type SolutionLanguage = (typeof LANGUAGES)[number];
+
+export const LANGUAGE_LABELS: Record<SolutionLanguage, string> = {
+  python: "Python",
+  javascript: "JavaScript",
+  typescript: "TypeScript",
+  java: "Java",
+  cpp: "C++",
+  c: "C",
+  go: "Go",
+  rust: "Rust",
+  ruby: "Ruby",
+  swift: "Swift",
+  kotlin: "Kotlin",
+};
+
+/** The language a new solution starts in. */
+export const DEFAULT_SOLUTION_LANGUAGE: SolutionLanguage = "python";
+
+export const MAX_SOLUTION_CODE_LENGTH = 20000;
+export const MAX_SOLUTION_EXPLANATION_LENGTH = 10000;
+export const MAX_COMPLEXITY_LENGTH = 40;
+export const MAX_ALTERNATIVE_LABEL_LENGTH = 80;
+export const MAX_ALTERNATIVE_CODE_LENGTH = 20000;
+
+/** Alternatives are a short list of "other ways I could write this". */
+export const MAX_SOLUTION_ALTERNATIVES = 5;
+
+export function isLanguage(value: string): value is SolutionLanguage {
+  return (LANGUAGES as readonly string[]).includes(value);
+}
+
 export function isDifficulty(value: string): value is Difficulty {
   return (DIFFICULTIES as readonly string[]).includes(value);
 }

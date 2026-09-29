@@ -16,6 +16,7 @@ import {
   type ReadOnlyRowData,
 } from "@/components/problems/problem-sections";
 import { ThinkingSessions } from "@/components/thinking/thinking-sessions";
+import { SolutionSection } from "@/components/solutions/solution-section";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { DifficultyBadge } from "@/components/ui/difficulty-badge";
@@ -90,15 +91,6 @@ export default async function ProblemDetailPage({
       badge: VISUALIZATION_LABELS[visualization.type],
     })
   );
-
-  const solutionRows: ReadOnlyRowData[] = records.solutions.map((solution) => ({
-    id: solution.id,
-    title: solution.time_complexity || solution.space_complexity
-      ? `${solution.time_complexity ?? "?"} time · ${solution.space_complexity ?? "?"} space`
-      : "Solution",
-    meta: solution.explanation ?? "No explanation written yet.",
-    badge: solution.language,
-  }));
 
   const reviewRows: ReadOnlyRowData[] = records.reviews.map((review) => ({
     id: review.id,
@@ -276,18 +268,7 @@ export default async function ProblemDetailPage({
         title="SOLUTION"
         hint="Kept separate from your thinking on purpose."
       >
-        {solutionRows.length ? (
-          <ReadOnlyRows
-            items={solutionRows}
-            note="the Solutions feature adds the code editor, alternatives, and complexity fields."
-          />
-        ) : (
-          <SectionPlaceholder
-            emoji="💻"
-            title="No solution saved yet"
-            description="Your final solution arrives with the Solutions feature."
-          />
-        )}
+        <SolutionSection problemId={problem.id} solutions={records.solutions} />
       </ProblemSection>
 
       {/* REFLECT */}
