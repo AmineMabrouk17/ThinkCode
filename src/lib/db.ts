@@ -4,6 +4,7 @@ import {
   MAX_TAG_LENGTH,
   MAX_TAGS,
   isDifficulty,
+  isNoteType,
   isProblemStatus,
 } from "@/lib/constants";
 import { slugify } from "@/lib/utils";
@@ -11,6 +12,11 @@ import type {
   AiConversation,
   DashboardData,
   Note,
+  NoteFilters,
+  NoteInput,
+  NoteType,
+  NoteTypeCounts,
+  NoteWithProblem,
   Pattern,
   PatternInput,
   PatternWithCount,
@@ -676,6 +682,114 @@ export function listNotes(problemId: string): Promise<Note[]> {
     "SELECT * FROM notes WHERE problem_id = ? ORDER BY created_at DESC",
     problemId
   );
+}
+
+/**
+ * The knowledge base query: every note with the title of the problem it
+ * belongs to. Both filters are optional and combined with AND; an unknown
+ * `type` is ignored instead of producing an empty result, and `q` is matched
+ * case-insensitively against the note title, its body, and the problem title
+ * (with LIKE wildcards escaped, like the problem search).
+ */
+export function listNotesFiltered(
+  filters: NoteFilters = {},
+  limit?: number
+): Promise<NoteWithProblem[]> {
+  const clauses: string[] = [];
+  const binds: unknown[] = [];
+
+  const q = filters.q?.trim();
+  if (q) {
+    const like = `%${q.toLowerCase().replace(/[\\%_]/g, "\\$&")}%`;
+    clauses.push(
+      "(LOWER(n.title) LIKE ? ESCAPE '\\' OR LOWER(n.content) LIKE ? ESCAPE '\\' OR LOWER(p.title) LIKE ? ESCAPE '\\')"
+    );
+    binds.push(like, like, like);
+  }
+
+  if (filters.type && isNoteType(filters.type)) {
+    clauses.push("n.type = ?");
+    binds.push(filters.type);
+  }
+
+  const where = clauses.length ? `WHERE ${clauses.join("\n   AND ")}` : "";
+  const limitClause = limit ? "LIMIT ?" : "";
+
+  return all<NoteWithProblem>(
+    `SELECT n.*, p.title AS problem_title
+     FROM notes n
+     JOIN problems p ON p.id = n.problem_id
+     ${where}
+     ORDER BY n.updated_at DESC, n.created_at DESC
+     ${limitClause}`,
+    ...binds,
+    ...(limit ? [limit] : [])
+  );
+}
+
+/** Note counts per type in one pass, for the `/knowledge` header. */
+export function countNotesByType(): Promise<NoteTypeCounts> {
+  return all<{ type: NoteType; n: number }>(
+    "SELECT type, COUNT(*) AS n FROM notes GROUP BY type"
+  ).then((rows) => {
+    const counts: NoteTypeCounts = {
+      mental_model: 0,
+      key_lesson: 0,
+      mistake: 0,
+      general: 0,
+    };
+    for (const row of rows) {
+      if (row.type in counts) counts[row.type] = row.n;
+    }
+    return counts;
+  });
+}
+
+/** Insert one note. Returns the new row id. */
+export async function insertNote(input: NoteInput): Promise<string> {
+  const id = crypto.randomUUID();
+
+  await run(
+    `INSERT INTO notes (id, problem_id, title, content, type)
+     VALUES (?, ?, ?, ?, ?)`,
+    id,
+    input.problemId,
+    input.title,
+    input.content,
+    input.type
+  );
+
+  return id;
+}
+
+/**
+ * Update a note in place and bump `updated_at`. Scoped to its problem so a
+ * hand-crafted id cannot rewrite a note from another problem.
+ */
+export function updateNote(
+  id: string,
+  problemId: string,
+  input: Omit<NoteInput, "problemId">
+): Promise<boolean> {
+  return run(
+    `UPDATE notes
+     SET type = ?, title = ?, content = ?, updated_at = datetime('now')
+     WHERE id = ? AND problem_id = ?`,
+    input.type,
+    input.title,
+    input.content,
+    id,
+    problemId
+  ).then((result) => result.meta.changes > 0);
+}
+
+/** Delete one note, scoped to its problem. Returns whether a row changed. */
+export function deleteNote(id: string, problemId: string): Promise<boolean> {
+  return run(
+    "DELETE FROM notes WHERE id = ? AND problem_id = ?",
+    id,
+    problemId
+  ).then((result) => result.meta.changes > 0);
 }
 
 export function listReviews(problemId: string): Promise<Review[]> {

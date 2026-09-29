@@ -160,6 +160,14 @@ export interface RecentNote {
   problem_title: string;
 }
 
+/** A full note joined with the title of the problem it belongs to. */
+export interface NoteWithProblem extends Note {
+  problem_title: string;
+}
+
+/** Note counts per type, from a single `GROUP BY type` query. */
+export type NoteTypeCounts = Record<NoteType, number>;
+
 /** A pattern with the number of problems linked through `problem_patterns`. */
 export interface PatternWithCount extends Pattern {
   problem_count: number;
@@ -311,4 +319,38 @@ export interface PatternFormState {
 export interface MentalModelFormState {
   status: "idle" | "error" | "success";
   message?: string;
+}
+
+// ---- knowledge notes ---------------------------------------------
+
+/**
+ * Filters for the knowledge base. They map 1:1 to the URL search params of
+ * `/knowledge` (`?q=&type=`), which keeps every view shareable and
+ * server-rendered.
+ */
+export interface NoteFilters {
+  /** Free text, matched against note title + content + problem title. */
+  q?: string;
+  type?: NoteType;
+}
+
+/** Validated, normalized note payload for create/update. */
+export interface NoteInput {
+  problemId: string;
+  type: NoteType;
+  title: string;
+  content: string;
+}
+
+/** Form fields of the note form that can carry a validation error. */
+export type NoteField = "type" | "title" | "content";
+
+/** Result of `createNote` / `updateNoteAction`, consumed by `useActionState`. */
+export interface NoteFormState {
+  status: "idle" | "error" | "success";
+  /** General (non field-specific) message. */
+  message?: string;
+  fieldErrors?: Partial<Record<NoteField, string>>;
+  /** Set once the note exists, so the modal can close. */
+  noteId?: string;
 }

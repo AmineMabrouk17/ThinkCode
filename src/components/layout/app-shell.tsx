@@ -10,6 +10,7 @@ const NAV_ITEMS: { href: string; emoji: string; label: string }[] = [
   { href: "/", emoji: "🏠", label: "Dashboard" },
   { href: "/problems", emoji: "📚", label: "Problems" },
   { href: "/patterns", emoji: "🧠", label: "Patterns" },
+  { href: "/knowledge", emoji: "📝", label: "Knowledge" },
   { href: "/review", emoji: "🔄", label: "Review" },
   { href: "/settings", emoji: "⚙️", label: "Settings" },
 ];
