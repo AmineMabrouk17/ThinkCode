@@ -10,13 +10,18 @@ import {
   MAX_SHORT_LENGTH,
   MAX_TAGS,
   MAX_TAG_LENGTH,
+  MAX_THOUGHTS_LENGTH,
   MAX_TITLE_LENGTH,
+  MIN_THINKING_SECONDS,
   isDifficulty,
   isProblemStatus,
 } from "@/lib/constants";
 import {
   deleteProblemById,
+  deleteThinkingSession,
+  getProblem,
   insertProblem,
+  insertThinkingSession,
   updateProblemById,
   updateProblemStatusById,
 } from "@/lib/db";
@@ -25,6 +30,7 @@ import type {
   ProblemFormState,
   ProblemInput,
   ProblemStatus,
+  ThinkingSessionFormState,
 } from "@/types";
 
 /**
@@ -211,6 +217,89 @@ export async function setProblemStatus(
   if (!updated) return { ok: false, error: "That problem no longer exists." };
 
   revalidateProblemPaths(id);
+
+  return { ok: true };
+}
+
+// ---- thinking sessions -------------------------------------------
+
+/**
+ * `2026-08-15T09:00:00.000Z` -> `2026-08-15 09:00:00`, the UTC shape D1 stores
+ * and `formatDateTime` renders. Unparseable values fall back to now, so a
+ * broken client clock can never write a row that cannot be sorted.
+ */
+function sqlTimestamp(value: string): string {
+  const date = new Date(value);
+  const safe = Number.isNaN(date.getTime()) ? new Date() : date;
+  return safe.toISOString().slice(0, 19).replace("T", " ");
+}
+
+function thinkingError(message: string): ThinkingSessionFormState {
+  return { status: "error", message };
+}
+
+/**
+ * Store a finished thinking session from the timer.
+ *
+ * The timer is the only writer, so the payload is small and fully trusted:
+ * the problem is re-checked against D1, the duration is floored at
+ * `MIN_THINKING_SECONDS` so an accidental instant finish is never recorded, and
+ * the thoughts are trimmed and capped. Only the problem route is revalidated —
+ * the dashboard shows no session data.
+ */
+export async function saveThinkingSession(
+  _prevState: ThinkingSessionFormState,
+  formData: FormData
+): Promise<ThinkingSessionFormState> {
+  const problemId = text(formData, "problemId");
+  if (!problemId) {
+    return thinkingError("Missing problem id — reopen the problem and try again.");
+  }
+
+  const problem = await getProblem(problemId);
+  if (!problem) {
+    return thinkingError("That problem no longer exists.");
+  }
+
+  const durationSeconds = Math.round(Number(text(formData, "durationSeconds")));
+  if (!Number.isFinite(durationSeconds) || durationSeconds < MIN_THINKING_SECONDS) {
+    return thinkingError(
+      `Keep thinking for at least ${MIN_THINKING_SECONDS} seconds before saving.`
+    );
+  }
+
+  const thoughts = text(formData, "thoughts").slice(0, MAX_THOUGHTS_LENGTH);
+
+  const sessionId = await insertThinkingSession({
+    problemId,
+    durationSeconds,
+    startedAt: sqlTimestamp(text(formData, "startedAt")),
+    endedAt: sqlTimestamp(text(formData, "endedAt")),
+    thoughts: thoughts || null,
+  });
+
+  revalidatePath(`/problems/${problemId}`);
+
+  return { status: "success", sessionId };
+}
+
+/** Delete one session from the THINK section history. */
+export async function deleteThinkingSessionAction(
+  problemId: string,
+  sessionId: string
+): Promise<{ ok: boolean; error?: string }> {
+  const problem = problemId?.trim();
+  const id = sessionId?.trim();
+  if (!problem || !id) {
+    return { ok: false, error: "Missing problem or session id." };
+  }
+
+  const deleted = await deleteThinkingSession(id, problem);
+  if (!deleted) {
+    return { ok: false, error: "That thinking session no longer exists." };
+  }
+
+  revalidatePath(`/problems/${problem}`);
 
   return { ok: true };
 }

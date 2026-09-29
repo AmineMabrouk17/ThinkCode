@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getProblemDetail, getProblemRecords, listPatterns, listTags } from "@/lib/db";
-import { formatDate, formatDateTime, formatDuration } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import {
   ProblemHeaderActions,
   ProblemStatusControl,
@@ -14,6 +14,7 @@ import {
   SectionPlaceholder,
   type ReadOnlyRowData,
 } from "@/components/problems/problem-sections";
+import { ThinkingSessions } from "@/components/thinking/thinking-sessions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { DifficultyBadge } from "@/components/ui/difficulty-badge";
@@ -68,15 +69,6 @@ export default async function ProblemDetailPage({
   ]);
 
   if (!problem) notFound();
-
-  const sessionRows: ReadOnlyRowData[] = records.sessions.map((session) => ({
-    id: session.id,
-    title: session.thoughts ? "Initial thoughts" : "Thinking session",
-    meta: `${formatDateTime(session.started_at)} · ${
-      session.thoughts ? "with written thoughts" : "no notes written"
-    }`,
-    badge: formatDuration(session.duration_seconds),
-  }));
 
   const aiRows: ReadOnlyRowData[] = records.aiConversations.map((ai) => ({
     id: ai.id,
@@ -212,20 +204,9 @@ export default async function ProblemDetailPage({
         id="section-think"
         emoji="🧠"
         title="THINK"
-        hint="Your first ideas, before any answer — the part you should never overwrite."
+        hint="Think independently before asking AI."
       >
-        {sessionRows.length ? (
-          <ReadOnlyRows
-            items={sessionRows}
-            note="the Thinking feature adds the 15-minute timer and lets you write and edit these thoughts."
-          />
-        ) : (
-          <SectionPlaceholder
-            emoji="⏱️"
-            title="No thinking sessions yet"
-            description="Thinking sessions & initial thoughts arrive with the Thinking feature."
-          />
-        )}
+        <ThinkingSessions problemId={problem.id} sessions={records.sessions} />
       </ProblemSection>
 
       {/* AI */}

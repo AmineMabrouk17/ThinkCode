@@ -64,6 +64,25 @@ export const DEFAULT_CATEGORY = "Arrays & Hashing";
 export const DEFAULT_DIFFICULTY: Difficulty = "medium";
 export const DEFAULT_STATUS: ProblemStatus = "learning";
 
+// ---- thinking timer ----------------------------------------------
+
+/** Preset session lengths, in minutes, offered by the thinking timer. */
+export const THINKING_DURATION_PRESETS = [5, 10, 15, 20, 30] as const;
+
+/** The default session length from the README: 15 minutes. */
+export const DEFAULT_THINKING_MINUTES = 15;
+
+export const MIN_THINKING_MINUTES = 1;
+export const MAX_THINKING_MINUTES = 180;
+
+/** Shorter sessions are accidental taps, so the server refuses to store them. */
+export const MIN_THINKING_SECONDS = 30;
+
+export const MAX_THOUGHTS_LENGTH = 5000;
+
+/** `localStorage` prefix for in-progress thoughts, suffixed with the problem id. */
+export const THINKING_DRAFT_PREFIX = "thinkcode:thinking-draft:";
+
 export const MAX_TITLE_LENGTH = 200;
 export const MAX_SHORT_LENGTH = 60;
 export const MAX_DESCRIPTION_LENGTH = 5000;

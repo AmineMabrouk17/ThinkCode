@@ -60,3 +60,31 @@ export function formatDuration(seconds: number): string {
   const rest = minutes % 60;
   return rest ? `${hours}h ${rest}m` : `${hours}h`;
 }
+
+/** `914` -> `"14:32"`, `3725` -> `"1:02:05"`. Used for the timer and durations. */
+export function formatClock(seconds: number): string {
+  const total = Number.isFinite(seconds) && seconds > 0 ? Math.round(seconds) : 0;
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const rest = total % 60;
+
+  const pad = (value: number) => String(value).padStart(2, "0");
+
+  return hours ? `${hours}:${pad(minutes)}:${pad(rest)}` : `${minutes}:${pad(rest)}`;
+}
+
+/**
+ * Thinking-session length as a badge: whole minutes stay short (`15m`), and
+ * anything else falls back to the clock so partial sessions are honest.
+ */
+export function formatSessionDuration(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "0m";
+  if (seconds % 60 === 0) {
+    const minutes = seconds / 60;
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const rest = minutes % 60;
+    return rest ? `${hours}h ${rest}m` : `${hours}h`;
+  }
+  return formatClock(seconds);
+}
