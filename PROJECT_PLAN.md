@@ -12,7 +12,7 @@ Each feature: dedicated branch → subagent implementation → PR → validate �
 - [x] feat/5-thinking — Thinking timer (configurable), thinking sessions, initial thoughts, session history
 - [x] feat/6-knowledge — Markdown notes: mental model, key lessons, mistakes (editor + preview)
 - [x] feat/7-solutions — Solution editor: language, code, complexity, explanation, alternatives
-- [ ] feat/8-resources — AI conversation links + YouTube/external resources
+- [x] feat/8-resources — AI conversation links + YouTube resources
 - [ ] feat/9-visualizations — Mermaid diagram visualizations
 - [ ] feat/10-review — Review system: sessions, history, spaced repetition, compare old vs new
 - [ ] feat/11-search — Global search across problems, notes, patterns
