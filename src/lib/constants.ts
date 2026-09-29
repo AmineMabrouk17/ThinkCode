@@ -4,6 +4,7 @@ import type {
   NoteType,
   ProblemStatus,
   ResourceType,
+  VisualizationType,
 } from "@/types";
 
 /**
@@ -95,6 +96,58 @@ export const AI_PROVIDER_EMOJI: Record<AiProvider, string> = {
 export const MAX_AI_TITLE_LENGTH = 160;
 export const MAX_AI_URL_LENGTH = 1000;
 export const MAX_AI_DESCRIPTION_LENGTH = 1000;
+
+// ---- visualizations -----------------------------------------------
+
+/**
+ * The three kinds of picture a problem can carry, in the order the form offers
+ * them: a Mermaid diagram, a plain-text/ASCII one, or a link to an image you
+ * drew somewhere else.
+ *
+ * There is no upload — an `image` row stores an absolute `http(s)` URL, and the
+ * file stays on whatever host it already lives on.
+ */
+export const VISUALIZATION_TYPES: readonly VisualizationType[] = [
+  "mermaid",
+  "diagram",
+  "image",
+];
+
+export const VISUALIZATION_LABELS: Record<VisualizationType, string> = {
+  mermaid: "Mermaid diagram",
+  diagram: "Text diagram",
+  image: "Image link",
+};
+
+/** Short badge text, for the card header and the read-only views. */
+export const VISUALIZATION_BADGE_LABELS: Record<VisualizationType, string> = {
+  mermaid: "Mermaid",
+  diagram: "Diagram",
+  image: "Image",
+};
+
+export const VISUALIZATION_TYPE_EMOJI: Record<VisualizationType, string> = {
+  mermaid: "🧩",
+  diagram: "📐",
+  image: "🖼",
+};
+
+/** Mermaid is the one people reach for first — it is the default. */
+export const DEFAULT_VISUALIZATION_TYPE: VisualizationType = "mermaid";
+
+export const MAX_VISUALIZATION_TITLE_LENGTH = 160;
+
+/** Mermaid source or ASCII art; an image URL gets the same generous budget. */
+export const MAX_VISUALIZATION_CONTENT_LENGTH = 20000;
+
+export const MAX_VISUALIZATION_URL_LENGTH = 1000;
+
+/** Placeholder per type, written to teach the shape of each content field. */
+export const VISUALIZATION_PLACEHOLDERS: Record<VisualizationType, string> = {
+  mermaid: "flowchart TD\n  A[Fix one number] --> B[Complement]",
+  diagram: "nums = [2, 7, 11, 15]\ntarget = 9\n\n  2 → complement 7 → not seen → remember",
+  image: "https://example.com/my-hand-drawn-sketch.png",
+};
 
 // ---- external resources -------------------------------------------
 
@@ -267,4 +320,8 @@ export function isAiProvider(value: string): value is AiProvider {
 
 export function isResourceType(value: string): value is ResourceType {
   return (RESOURCE_TYPES as readonly string[]).includes(value);
+}
+
+export function isVisualizationType(value: string): value is VisualizationType {
+  return (VISUALIZATION_TYPES as readonly string[]).includes(value);
 }

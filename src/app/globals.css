@@ -42,6 +42,26 @@ body {
   outline-offset: 2px;
 }
 
+/* ---- mermaid ------------------------------------------------------ */
+
+/*
+ * Mermaid renders into this container (components/visualizations/
+ * mermaid-renderer.tsx) and injects its own SVG. Two things have to be true of
+ * that SVG for it to live inside the app's own chrome: it must never overflow
+ * the card, and it must not paint a light box of its own over the dark theme.
+ * The library's colours come from `themeVariables` in the same component; only
+ * the box-model rules belong here.
+ */
+.mermaid-surface {
+  color: var(--color-ink);
+}
+
+.mermaid-surface svg {
+  max-width: 100%;
+  height: auto;
+  background: transparent;
+}
+
 /* ---- markdown ---------------------------------------------------- */
 
 /*

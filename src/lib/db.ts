@@ -40,6 +40,7 @@ import type {
   ThinkingSession,
   ThinkingSessionInput,
   Visualization,
+  VisualizationInput,
 } from "@/types";
 
 /**
@@ -882,6 +883,68 @@ export function listVisualizations(
     "SELECT * FROM visualizations WHERE problem_id = ? ORDER BY created_at DESC",
     problemId
   );
+}
+
+// ---- visualization mutations ---------------------------------------
+
+/**
+ * Attach one visualization to a problem. `content` is whatever the type means:
+ * Mermaid source, ASCII art, or the URL of an image hosted elsewhere — there is
+ * no upload in ThinkCode, so an image is only ever a link. Returns the new row
+ * id.
+ */
+export async function insertVisualization(input: VisualizationInput): Promise<string> {
+  const id = crypto.randomUUID();
+
+  await run(
+    `INSERT INTO visualizations (id, problem_id, title, type, content)
+     VALUES (?, ?, ?, ?, ?)`,
+    id,
+    input.problemId,
+    input.title,
+    input.type,
+    input.content
+  );
+
+  return id;
+}
+
+/**
+ * Update a visualization in place. `visualizations` has no `updated_at`
+ * column — the row keeps its original `created_at`, so only the fields change.
+ * Scoped to its problem so a hand-crafted id cannot rewrite another problem's
+ * visualization.
+ */
+export function updateVisualization(
+  id: string,
+  problemId: string,
+  input: Omit<VisualizationInput, "problemId">
+): Promise<boolean> {
+  return run(
+    `UPDATE visualizations
+     SET type = ?, title = ?, content = ?
+     WHERE id = ? AND problem_id = ?`,
+    input.type,
+    input.title,
+    input.content,
+    id,
+    problemId
+  ).then((result) => result.meta.changes > 0);
+}
+
+/**
+ * Delete one visualization. Scoped to its problem so a hand-crafted id cannot
+ * drop a row from another problem. Returns whether a row changed.
+ */
+export function deleteVisualization(
+  id: string,
+  problemId: string
+): Promise<boolean> {
+  return run(
+    "DELETE FROM visualizations WHERE id = ? AND problem_id = ?",
+    id,
+    problemId
+  ).then((result) => result.meta.changes > 0);
 }
 
 export function listAiConversations(
