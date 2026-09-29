@@ -11,7 +11,7 @@ Each feature: dedicated branch → subagent implementation → PR → validate �
 - [x] feat/4-patterns-tags — Patterns library + pattern detail knowledge pages, tags CRUD
 - [x] feat/5-thinking — Thinking timer (configurable), thinking sessions, initial thoughts, session history
 - [x] feat/6-knowledge — Markdown notes: mental model, key lessons, mistakes (editor + preview)
-- [ ] feat/7-solutions — Solution editor: language, code, complexity, explanation, alternatives
+- [x] feat/7-solutions — Solution editor: language, code, complexity, explanation, alternatives
 - [ ] feat/8-resources — AI conversation links + YouTube/external resources
 - [ ] feat/9-visualizations — Mermaid diagram visualizations
 - [ ] feat/10-review — Review system: sessions, history, spaced repetition, compare old vs new
