@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { getProblemDetail, getProblemRecords, listPatterns, listTags } from "@/lib/db";
 import { formatDate } from "@/lib/utils";
+import { KnowledgeSection } from "@/components/knowledge/knowledge-section";
 import {
   ProblemHeaderActions,
   ProblemStatusControl,
@@ -19,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { DifficultyBadge } from "@/components/ui/difficulty-badge";
 import { StatusBadge } from "@/components/ui/status-badge";
-import type { NoteType, ResourceType, VisualizationType } from "@/types";
+import type { ResourceType, VisualizationType } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -34,13 +35,6 @@ export async function generateMetadata({
     title: problem ? problem.title : "Problem",
   };
 }
-
-const NOTE_LABELS: Record<NoteType, string> = {
-  mental_model: "Mental model",
-  key_lesson: "Key lesson",
-  mistake: "Mistake",
-  general: "Note",
-};
 
 const RESOURCE_LABELS: Record<ResourceType, string> = {
   youtube: "YouTube",
@@ -96,13 +90,6 @@ export default async function ProblemDetailPage({
       badge: VISUALIZATION_LABELS[visualization.type],
     })
   );
-
-  const noteRows: ReadOnlyRowData[] = records.notes.map((note) => ({
-    id: note.id,
-    title: note.title,
-    meta: note.content,
-    badge: NOTE_LABELS[note.type],
-  }));
 
   const solutionRows: ReadOnlyRowData[] = records.solutions.map((solution) => ({
     id: solution.id,
@@ -258,18 +245,7 @@ export default async function ProblemDetailPage({
         title="KNOWLEDGE"
         hint="The condensed explanation future-you comes back for."
       >
-        {noteRows.length ? (
-          <ReadOnlyRows
-            items={noteRows}
-            note="the Knowledge feature adds a markdown editor for each note type."
-          />
-        ) : (
-          <SectionPlaceholder
-            emoji="📝"
-            title="No notes yet"
-            description="Notes (mental model, key lessons, mistakes) arrive with the Knowledge feature."
-          />
-        )}
+        <KnowledgeSection problemId={problem.id} notes={records.notes} />
       </ProblemSection>
 
       {/* RESOURCES */}

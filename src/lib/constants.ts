@@ -1,4 +1,4 @@
-import type { Difficulty, ProblemStatus } from "@/types";
+import type { Difficulty, NoteType, ProblemStatus } from "@/types";
 
 /**
  * Selectable option lists + labels for the problem library.
@@ -92,10 +92,58 @@ export const MAX_MENTAL_MODEL_LENGTH = 2000;
 export const MAX_SIGNALS = 20;
 export const MAX_SIGNAL_LENGTH = 160;
 
+// ---- knowledge notes ----------------------------------------------
+
+/** The four note flavours of the KNOWLEDGE section, in reading order. */
+export const NOTE_TYPES: readonly NoteType[] = [
+  "mental_model",
+  "key_lesson",
+  "mistake",
+  "general",
+];
+
+export const NOTE_TYPE_LABELS: Record<NoteType, string> = {
+  mental_model: "Mental model",
+  key_lesson: "Key lesson",
+  mistake: "Mistake",
+  general: "Note",
+};
+
+/** Short plurals for the `/knowledge` filter chips. */
+export const NOTE_TYPE_PLURALS: Record<NoteType, string> = {
+  mental_model: "Mental models",
+  key_lesson: "Key lessons",
+  mistake: "Mistakes",
+  general: "General",
+};
+
+export const NOTE_TYPE_EMOJI: Record<NoteType, string> = {
+  mental_model: "🧠",
+  key_lesson: "💡",
+  mistake: "❌",
+  general: "📝",
+};
+
+/** A note starts as the thing you most want to keep: the mental model. */
+export const DEFAULT_NOTE_TYPE: NoteType = "mental_model";
+
+/** Fallback title when the body has no usable first line. */
+export const UNTITLED_NOTE_TITLE = "Untitled note";
+
+export const MAX_NOTE_TITLE_LENGTH = 120;
+export const MAX_NOTE_CONTENT_LENGTH = 20000;
+
+/** How much of a note the `/knowledge` card shows before the Read toggle. */
+export const NOTE_EXCERPT_LENGTH = 180;
+
 export function isDifficulty(value: string): value is Difficulty {
   return (DIFFICULTIES as readonly string[]).includes(value);
 }
 
 export function isProblemStatus(value: string): value is ProblemStatus {
   return (PROBLEM_STATUSES as readonly string[]).includes(value);
+}
+
+export function isNoteType(value: string): value is NoteType {
+  return (NOTE_TYPES as readonly string[]).includes(value);
 }
