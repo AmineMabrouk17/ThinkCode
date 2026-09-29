@@ -19,11 +19,11 @@ import { AiConversations } from "@/components/resources/ai-conversations";
 import { ResourceSection } from "@/components/resources/resource-section";
 import { ThinkingSessions } from "@/components/thinking/thinking-sessions";
 import { SolutionSection } from "@/components/solutions/solution-section";
+import { VisualizationSection } from "@/components/visualizations/visualization-section";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { DifficultyBadge } from "@/components/ui/difficulty-badge";
 import { StatusBadge } from "@/components/ui/status-badge";
-import type { VisualizationType } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -38,12 +38,6 @@ export async function generateMetadata({
     title: problem ? problem.title : "Problem",
   };
 }
-
-const VISUALIZATION_LABELS: Record<VisualizationType, string> = {
-  mermaid: "Mermaid",
-  image: "Image",
-  diagram: "Diagram",
-};
 
 export default async function ProblemDetailPage({
   params,
@@ -60,15 +54,6 @@ export default async function ProblemDetailPage({
   ]);
 
   if (!problem) notFound();
-
-  const visualizationRows: ReadOnlyRowData[] = records.visualizations.map(
-    (visualization) => ({
-      id: visualization.id,
-      title: visualization.title,
-      meta: formatDate(visualization.created_at),
-      badge: VISUALIZATION_LABELS[visualization.type],
-    })
-  );
 
   const reviewRows: ReadOnlyRowData[] = records.reviews.map((review) => ({
     id: review.id,
@@ -186,18 +171,10 @@ export default async function ProblemDetailPage({
         title="UNDERSTAND"
         hint="Diagrams, tables, and animated traces of the algorithm."
       >
-        {visualizationRows.length ? (
-          <ReadOnlyRows
-            items={visualizationRows}
-            note="the Visualization feature renders Mermaid, images, and custom diagrams."
-          />
-        ) : (
-          <SectionPlaceholder
-            emoji="📊"
-            title="No visualizations yet"
-            description="Visualizations arrive with the Visualization feature."
-          />
-        )}
+        <VisualizationSection
+          problemId={problem.id}
+          visualizations={records.visualizations}
+        />
       </ProblemSection>
 
       {/* KNOWLEDGE */}

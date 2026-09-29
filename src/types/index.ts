@@ -392,6 +392,36 @@ export interface SolutionFormState {
   solutionId?: string;
 }
 
+// ---- visualizations ----------------------------------------------
+
+/**
+ * Validated payload for one visualization.
+ *
+ * The three kinds share one `content` column, so what it holds depends on
+ * `type`: Mermaid source, plain-text/ASCII art, or an absolute `http(s)` image
+ * URL. An image is a *link* — ThinkCode has no upload or file storage, so the
+ * picture stays wherever it was drawn and only the pointer is kept.
+ */
+export interface VisualizationInput {
+  problemId: string;
+  title: string;
+  type: VisualizationType;
+  content: string;
+}
+
+/** Form fields of the visualization form that can carry a validation error. */
+export type VisualizationField = "type" | "title" | "content";
+
+/** Result of `createVisualization` / `updateVisualizationAction`, consumed by `useActionState`. */
+export interface VisualizationFormState {
+  status: "idle" | "error" | "success";
+  /** General (non field-specific) message. */
+  message?: string;
+  fieldErrors?: Partial<Record<VisualizationField, string>>;
+  /** Set once the visualization exists, so the modal can close. */
+  visualizationId?: string;
+}
+
 // ---- AI conversations & resources --------------------------------
 
 /**
