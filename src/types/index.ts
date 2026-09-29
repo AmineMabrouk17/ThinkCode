@@ -255,6 +255,28 @@ export interface ProblemFormState {
   problemId?: string;
 }
 
+// ---- thinking ---------------------------------------------------
+
+/** Validated payload for a finished thinking session. */
+export interface ThinkingSessionInput {
+  problemId: string;
+  /** At least `MIN_THINKING_SECONDS`; enforced by the server action. */
+  durationSeconds: number;
+  /** `YYYY-MM-DD HH:MM:SS` UTC, the shape D1 stores. */
+  startedAt: string;
+  endedAt: string | null;
+  thoughts: string | null;
+}
+
+/** Result of `saveThinkingSession`, consumed by `useActionState`. */
+export interface ThinkingSessionFormState {
+  status: "idle" | "error" | "success";
+  /** General (non field-specific) message. */
+  message?: string;
+  /** Set once the session exists, so the client can close the modal. */
+  sessionId?: string;
+}
+
 // ---- pattern library --------------------------------------------
 
 /** Validated, normalized pattern payload for creation. */

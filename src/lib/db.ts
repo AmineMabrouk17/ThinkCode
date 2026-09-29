@@ -29,6 +29,7 @@ import type {
   Tag,
   TagWithCount,
   ThinkingSession,
+  ThinkingSessionInput,
   Visualization,
 } from "@/types";
 
@@ -625,6 +626,50 @@ export function listThinkingSessions(
     problemId
   );
 }
+
+// ---- thinking session mutations ----------------------------------
+
+/**
+ * Persist a finished thinking session. Timestamps arrive already normalized by
+ * the action (`YYYY-MM-DD HH:MM:SS` UTC), so `started_at` keeps sorting the
+ * same way as the `datetime('now')` default. Returns the new row id.
+ */
+export async function insertThinkingSession(
+  input: ThinkingSessionInput
+): Promise<string> {
+  const id = crypto.randomUUID();
+
+  await run(
+    `INSERT INTO thinking_sessions
+       (id, problem_id, duration_seconds, started_at, ended_at, thoughts)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    id,
+    input.problemId,
+    input.durationSeconds,
+    input.startedAt,
+    input.endedAt,
+    input.thoughts
+  );
+
+  return id;
+}
+
+/**
+ * Delete one session. Scoped to its problem so a hand-crafted id cannot drop
+ * a row from another problem.
+ */
+export function deleteThinkingSession(
+  id: string,
+  problemId: string
+): Promise<boolean> {
+  return run(
+    "DELETE FROM thinking_sessions WHERE id = ? AND problem_id = ?",
+    id,
+    problemId
+  ).then((result) => result.meta.changes > 0);
+}
+
+// ---- notes ------------------------------------------------------
 
 export function listNotes(problemId: string): Promise<Note[]> {
   return all<Note>(
