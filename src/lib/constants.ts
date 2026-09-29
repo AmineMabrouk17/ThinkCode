@@ -1,4 +1,10 @@
-import type { Difficulty, NoteType, ProblemStatus } from "@/types";
+import type {
+  AiProvider,
+  Difficulty,
+  NoteType,
+  ProblemStatus,
+  ResourceType,
+} from "@/types";
 
 /**
  * Selectable option lists + labels for the problem library.
@@ -63,6 +69,61 @@ export const DEFAULT_PLATFORM = "NeetCode";
 export const DEFAULT_CATEGORY = "Arrays & Hashing";
 export const DEFAULT_DIFFICULTY: Difficulty = "medium";
 export const DEFAULT_STATUS: ProblemStatus = "learning";
+
+// ---- AI conversations --------------------------------------------
+
+/**
+ * The AI tools a conversation can come from. ThinkCode stores the link to the
+ * discussion, never the discussion itself — the tool keeps the transcript.
+ */
+export const AI_PROVIDERS: readonly AiProvider[] = [
+  "ChatGPT",
+  "AI Studio",
+  "Claude",
+  "Other",
+];
+
+export const DEFAULT_AI_PROVIDER: AiProvider = "ChatGPT";
+
+export const AI_PROVIDER_EMOJI: Record<AiProvider, string> = {
+  ChatGPT: "💬",
+  "AI Studio": "✨",
+  Claude: "🧠",
+  Other: "🔗",
+};
+
+export const MAX_AI_TITLE_LENGTH = 160;
+export const MAX_AI_URL_LENGTH = 1000;
+export const MAX_AI_DESCRIPTION_LENGTH = 1000;
+
+// ---- external resources -------------------------------------------
+
+export const RESOURCE_TYPES: readonly ResourceType[] = [
+  "youtube",
+  "article",
+  "other",
+];
+
+export const RESOURCE_LABELS: Record<ResourceType, string> = {
+  youtube: "YouTube",
+  article: "Article",
+  other: "Link",
+};
+
+export const RESOURCE_TYPE_EMOJI: Record<ResourceType, string> = {
+  youtube: "🎥",
+  article: "📄",
+  other: "🔗",
+};
+
+/** A new resource starts as a video — the most common thing to save. */
+export const DEFAULT_RESOURCE_TYPE: ResourceType = "youtube";
+
+export const MAX_RESOURCE_TITLE_LENGTH = 160;
+export const MAX_RESOURCE_URL_LENGTH = 1000;
+export const MAX_RESOURCE_CREATOR_LENGTH = 80;
+export const MAX_RESOURCE_DESCRIPTION_LENGTH = 1000;
+export const MAX_RESOURCE_NOTES_LENGTH = 2000;
 
 // ---- thinking timer ----------------------------------------------
 
@@ -198,4 +259,12 @@ export function isProblemStatus(value: string): value is ProblemStatus {
 
 export function isNoteType(value: string): value is NoteType {
   return (NOTE_TYPES as readonly string[]).includes(value);
+}
+
+export function isAiProvider(value: string): value is AiProvider {
+  return (AI_PROVIDERS as readonly string[]).includes(value);
+}
+
+export function isResourceType(value: string): value is ResourceType {
+  return (RESOURCE_TYPES as readonly string[]).includes(value);
 }

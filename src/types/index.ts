@@ -86,6 +86,8 @@ export interface Resource {
   type: ResourceType;
   title: string;
   url: string;
+  /** Who made it (channel, blog, community) — the README's `Creator` field. */
+  creator: string | null;
   description: string | null;
   notes: string | null;
   created_at: string;
@@ -388,4 +390,64 @@ export interface SolutionFormState {
   fieldErrors?: Partial<Record<SolutionField, string>>;
   /** Set once the solution exists, so the modal can close. */
   solutionId?: string;
+}
+
+// ---- AI conversations & resources --------------------------------
+
+/**
+ * Validated payload for one saved AI conversation.
+ *
+ * Only the link is stored: ThinkCode never mirrors the conversation itself, so
+ * the row is a pointer (provider + url) plus the personal reason for keeping it.
+ */
+export interface AiConversationInput {
+  problemId: string;
+  provider: AiProvider;
+  title: string;
+  url: string;
+  description: string | null;
+}
+
+/** Form fields of the AI conversation form that can carry a validation error. */
+export type AiConversationField = "provider" | "title" | "url" | "description";
+
+/** Result of `createAiConversation`, consumed by `useActionState`. */
+export interface AiConversationFormState {
+  status: "idle" | "error" | "success";
+  /** General (non field-specific) message. */
+  message?: string;
+  fieldErrors?: Partial<Record<AiConversationField, string>>;
+  /** Set once the conversation exists, so the modal can close. */
+  conversationId?: string;
+}
+
+/** Validated payload for one external resource (video, article, or link). */
+export interface ResourceInput {
+  problemId: string;
+  type: ResourceType;
+  title: string;
+  url: string;
+  creator: string | null;
+  description: string | null;
+  /** The personal "Why I saved it" note. */
+  notes: string | null;
+}
+
+/** Form fields of the resource form that can carry a validation error. */
+export type ResourceField =
+  | "type"
+  | "title"
+  | "url"
+  | "creator"
+  | "description"
+  | "notes";
+
+/** Result of `createResource` / `updateResourceAction`, consumed by `useActionState`. */
+export interface ResourceFormState {
+  status: "idle" | "error" | "success";
+  /** General (non field-specific) message. */
+  message?: string;
+  fieldErrors?: Partial<Record<ResourceField, string>>;
+  /** Set once the resource exists, so the modal can close. */
+  resourceId?: string;
 }

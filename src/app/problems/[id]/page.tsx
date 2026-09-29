@@ -15,13 +15,15 @@ import {
   SectionPlaceholder,
   type ReadOnlyRowData,
 } from "@/components/problems/problem-sections";
+import { AiConversations } from "@/components/resources/ai-conversations";
+import { ResourceSection } from "@/components/resources/resource-section";
 import { ThinkingSessions } from "@/components/thinking/thinking-sessions";
 import { SolutionSection } from "@/components/solutions/solution-section";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { DifficultyBadge } from "@/components/ui/difficulty-badge";
 import { StatusBadge } from "@/components/ui/status-badge";
-import type { ResourceType, VisualizationType } from "@/types";
+import type { VisualizationType } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -36,12 +38,6 @@ export async function generateMetadata({
     title: problem ? problem.title : "Problem",
   };
 }
-
-const RESOURCE_LABELS: Record<ResourceType, string> = {
-  youtube: "YouTube",
-  article: "Article",
-  other: "Link",
-};
 
 const VISUALIZATION_LABELS: Record<VisualizationType, string> = {
   mermaid: "Mermaid",
@@ -64,24 +60,6 @@ export default async function ProblemDetailPage({
   ]);
 
   if (!problem) notFound();
-
-  const aiRows: ReadOnlyRowData[] = records.aiConversations.map((ai) => ({
-    id: ai.id,
-    title: ai.title,
-    meta: `${ai.provider} · ${formatDate(ai.created_at)}`,
-    badge: "Open ↗",
-    href: ai.url,
-  }));
-
-  const resourceRows: ReadOnlyRowData[] = records.resources.map((resource) => ({
-    id: resource.id,
-    title: resource.title,
-    meta: `${formatDate(resource.created_at)}${
-      resource.notes ? " · with your note" : ""
-    }`,
-    badge: RESOURCE_LABELS[resource.type],
-    href: resource.url,
-  }));
 
   const visualizationRows: ReadOnlyRowData[] = records.visualizations.map(
     (visualization) => ({
@@ -193,20 +171,12 @@ export default async function ProblemDetailPage({
         id="section-ai"
         emoji="💬"
         title="AI"
-        hint="Links only — the conversation itself stays in ChatGPT / AI Studio."
+        hint="ThinkCode stores the link, not the conversation — your thinking stays yours."
       >
-        {aiRows.length ? (
-          <ReadOnlyRows
-            items={aiRows}
-            note="Resources adds AI conversations, with a provider and why you saved it."
-          />
-        ) : (
-          <SectionPlaceholder
-            emoji="💬"
-            title="No AI conversations linked"
-            description="AI conversation links arrive with Resources."
-          />
-        )}
+        <AiConversations
+          problemId={problem.id}
+          conversations={records.aiConversations}
+        />
       </ProblemSection>
 
       {/* UNDERSTAND */}
@@ -247,18 +217,7 @@ export default async function ProblemDetailPage({
         title="RESOURCES"
         hint="Explanations worth revisiting, with your own reason for saving them."
       >
-        {resourceRows.length ? (
-          <ReadOnlyRows
-            items={resourceRows}
-            note="Resources lets you add YouTube links with titles, creators, and personal notes."
-          />
-        ) : (
-          <SectionPlaceholder
-            emoji="🎥"
-            title="No resources saved"
-            description="YouTube & external resources arrive with Resources."
-          />
-        )}
+        <ResourceSection problemId={problem.id} resources={records.resources} />
       </ProblemSection>
 
       {/* SOLUTION */}
