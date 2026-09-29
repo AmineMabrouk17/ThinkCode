@@ -9,7 +9,7 @@ Each feature: dedicated branch → subagent implementation → PR → validate �
 - [x] feat/2-dashboard — Dashboard: stats, continue learning, recent, needs review, patterns overview
 - [x] feat/3-problems — Problem library: list, search/filters, create/edit/delete, problem detail page
 - [x] feat/4-patterns-tags — Patterns library + pattern detail knowledge pages, tags CRUD
-- [ ] feat/5-thinking — Thinking timer (configurable), thinking sessions, initial thoughts, session history
+- [x] feat/5-thinking — Thinking timer (configurable), thinking sessions, initial thoughts, session history
 - [ ] feat/6-knowledge — Markdown notes: mental model, key lessons, mistakes (editor + preview)
 - [ ] feat/7-solutions — Solution editor: language, code, complexity, explanation, alternatives
 - [ ] feat/8-resources — AI conversation links + YouTube/external resources
