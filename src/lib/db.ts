@@ -32,6 +32,7 @@ import type {
   Review,
   ReviewDueProblem,
   Solution,
+  SolutionInput,
   Tag,
   TagWithCount,
   ThinkingSession,
@@ -804,6 +805,65 @@ export function listSolutions(problemId: string): Promise<Solution[]> {
     "SELECT * FROM solutions WHERE problem_id = ? ORDER BY created_at DESC",
     problemId
   );
+}
+
+/**
+ * Persist one final solution. `alternatives` arrives already serialized to JSON
+ * by the action. Returns the new row id.
+ */
+export async function insertSolution(input: SolutionInput): Promise<string> {
+  const id = crypto.randomUUID();
+
+  await run(
+    `INSERT INTO solutions
+       (id, problem_id, language, code, time_complexity, space_complexity,
+        explanation, alternatives)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    id,
+    input.problemId,
+    input.language,
+    input.code,
+    input.timeComplexity,
+    input.spaceComplexity,
+    input.explanation,
+    input.alternatives.length ? JSON.stringify(input.alternatives) : null
+  );
+
+  return id;
+}
+
+/**
+ * Update a solution in place and bump `updated_at`. Scoped to its problem so a
+ * hand-crafted id cannot rewrite a solution from another problem.
+ */
+export function updateSolution(
+  id: string,
+  problemId: string,
+  input: Omit<SolutionInput, "problemId">
+): Promise<boolean> {
+  return run(
+    `UPDATE solutions
+     SET language = ?, code = ?, time_complexity = ?, space_complexity = ?,
+         explanation = ?, alternatives = ?, updated_at = datetime('now')
+     WHERE id = ? AND problem_id = ?`,
+    input.language,
+    input.code,
+    input.timeComplexity,
+    input.spaceComplexity,
+    input.explanation,
+    input.alternatives.length ? JSON.stringify(input.alternatives) : null,
+    id,
+    problemId
+  ).then((result) => result.meta.changes > 0);
+}
+
+/** Delete one solution. Scoped to its problem. */
+export function deleteSolution(id: string, problemId: string): Promise<boolean> {
+  return run(
+    "DELETE FROM solutions WHERE id = ? AND problem_id = ?",
+    id,
+    problemId
+  ).then((result) => result.meta.changes > 0);
 }
 
 export function listResources(problemId: string): Promise<Resource[]> {

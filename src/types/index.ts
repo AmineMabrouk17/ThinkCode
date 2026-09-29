@@ -26,6 +26,8 @@ export type VisualizationType = "mermaid" | "image" | "diagram";
 export type SolutionAlternative = {
   label: string;
   code: string;
+  /** Overrides the parent solution's language when set. */
+  language?: string;
 };
 
 export interface Problem {
@@ -353,4 +355,37 @@ export interface NoteFormState {
   fieldErrors?: Partial<Record<NoteField, string>>;
   /** Set once the note exists, so the modal can close. */
   noteId?: string;
+}
+
+// ---- solutions ---------------------------------------------------
+
+/** Validated, normalized solution payload for create/update. */
+export interface SolutionInput {
+  problemId: string;
+  language: string;
+  code: string;
+  timeComplexity: string | null;
+  spaceComplexity: string | null;
+  explanation: string | null;
+  /** Stored as a JSON array string; `[]` means "no alternatives". */
+  alternatives: SolutionAlternative[];
+}
+
+/** Form fields of the solution form that can carry a validation error. */
+export type SolutionField =
+  | "language"
+  | "code"
+  | "timeComplexity"
+  | "spaceComplexity"
+  | "explanation"
+  | "alternatives";
+
+/** Result of `createSolution` / `updateSolutionAction`, consumed by `useActionState`. */
+export interface SolutionFormState {
+  status: "idle" | "error" | "success";
+  /** General (non field-specific) message. */
+  message?: string;
+  fieldErrors?: Partial<Record<SolutionField, string>>;
+  /** Set once the solution exists, so the modal can close. */
+  solutionId?: string;
 }
