@@ -10,6 +10,7 @@ import {
 import { slugify } from "@/lib/utils";
 import type {
   AiConversation,
+  AiConversationInput,
   DashboardData,
   Note,
   NoteFilters,
@@ -29,6 +30,7 @@ import type {
   ProblemWithMeta,
   RecentNote,
   Resource,
+  ResourceInput,
   Review,
   ReviewDueProblem,
   Solution,
@@ -888,6 +890,109 @@ export function listAiConversations(
   return all<AiConversation>(
     "SELECT * FROM ai_conversations WHERE problem_id = ? ORDER BY created_at DESC",
     problemId
+  );
+}
+
+// ---- ai conversation mutations -----------------------------------
+
+/**
+ * Persist a pointer to an AI conversation. Only the link is stored — the
+ * transcript stays in ChatGPT / AI Studio / Claude, which is the whole point of
+ * the feature. Returns the new row id.
+ */
+export async function insertAiConversation(
+  input: AiConversationInput
+): Promise<string> {
+  const id = crypto.randomUUID();
+
+  await run(
+    `INSERT INTO ai_conversations
+       (id, problem_id, provider, title, url, description)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    id,
+    input.problemId,
+    input.provider,
+    input.title,
+    input.url,
+    input.description
+  );
+
+  return id;
+}
+
+/**
+ * Delete one conversation link. Scoped to its problem so a hand-crafted id
+ * cannot drop a row from another problem.
+ */
+export function deleteAiConversation(
+  id: string,
+  problemId: string
+): Promise<boolean> {
+  return run(
+    "DELETE FROM ai_conversations WHERE id = ? AND problem_id = ?",
+    id,
+    problemId
+  ).then((result) => result.meta.changes > 0);
+}
+
+// ---- resource mutations -------------------------------------------
+
+/**
+ * Attach one external resource (video, article, or plain link) to a problem.
+ * `creator` is the who — channel, blog, or community. Returns the new row id.
+ */
+export async function insertResource(input: ResourceInput): Promise<string> {
+  const id = crypto.randomUUID();
+
+  await run(
+    `INSERT INTO resources
+       (id, problem_id, type, title, url, creator, description, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    id,
+    input.problemId,
+    input.type,
+    input.title,
+    input.url,
+    input.creator,
+    input.description,
+    input.notes
+  );
+
+  return id;
+}
+
+/**
+ * Update a resource in place. `resources` has no `updated_at` column — the row
+ * keeps its original `created_at`, so only the fields change. Scoped to its
+ * problem so a hand-crafted id cannot rewrite another problem's resource.
+ */
+export function updateResource(
+  id: string,
+  problemId: string,
+  input: Omit<ResourceInput, "problemId">
+): Promise<boolean> {
+  return run(
+    `UPDATE resources
+     SET type = ?, title = ?, url = ?, creator = ?, description = ?, notes = ?
+     WHERE id = ? AND problem_id = ?`,
+    input.type,
+    input.title,
+    input.url,
+    input.creator,
+    input.description,
+    input.notes,
+    id,
+    problemId
+  ).then((result) => result.meta.changes > 0);
+}
+
+/** Delete one resource. Scoped to its problem. Returns whether a row changed. */
+export function deleteResource(
+  id: string,
+  problemId: string
+): Promise<boolean> {
+  return run("DELETE FROM resources WHERE id = ? AND problem_id = ?", id, problemId).then(
+    (result) => result.meta.changes > 0
   );
 }
 

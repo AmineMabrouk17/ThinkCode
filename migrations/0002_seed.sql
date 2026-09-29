@@ -163,10 +163,13 @@ INSERT OR IGNORE INTO thinking_sessions (id, problem_id, duration_seconds, start
 
 INSERT OR IGNORE INTO ai_conversations (id, problem_id, provider, title, url, description, created_at) VALUES
   ('ai-1', 'p1', 'ChatGPT', 'Why does the hashmap approach work?', 'https://chatgpt.com/c/example',
-   'AI explained the complement idea in a way I finally understood.', '2026-08-15 09:20:00');
+   'AI explained the complement idea in a way I finally understood.', '2026-08-15 09:20:00'),
+  ('ai-2', 'p1', 'AI Studio', 'Turn my brute force into a second pair', 'https://aistudio.google.com/prompts/chat/2',
+    'Asked for the pair-tracking version of brute force; the trace table finally made the index bookkeeping obvious.',
+    '2026-08-15 09:35:00');
 
-INSERT OR IGNORE INTO resources (id, problem_id, type, title, url, description, notes, created_at) VALUES
-  ('res-1', 'p1', 'youtube', 'Two Sum Explained', 'https://www.youtube.com/watch?v=KLlXCFG5TnA',
+INSERT OR IGNORE INTO resources (id, problem_id, type, title, url, creator, description, notes, created_at) VALUES
+  ('res-1', 'p1', 'youtube', 'Two Sum Explained', 'https://www.youtube.com/watch?v=KLlXCFG5TnA', 'NeetCode',
    'NeetCode walkthrough of the two-pass and one-pass hashmap solutions.',
    'Great visualization of the seen-values map.', '2026-08-15 10:00:00');
 
@@ -231,3 +234,20 @@ INSERT OR IGNORE INTO notes (id, problem_id, title, content, type, created_at, u
   ('note-5', 'p2', 'Mental model',
    'Fix one number, then reduce the remaining range to a Two Sum problem solved with two pointers on the sorted tail. Skip duplicates to keep the triplets unique.',
    'mental_model', '2026-08-25 16:20:00', '2026-08-25 16:20:00');
+
+-- ============================================================
+-- More external resources (RESOURCES section)
+-- ------------------------------------------------------------
+-- 3Sum (p2) is deliberately left without resources or AI links so the
+-- section empty states are visible on a real problem page.
+-- ============================================================
+INSERT OR IGNORE INTO resources (id, problem_id, type, title, url, creator, description, notes, created_at) VALUES
+  ('res-2', 'p3', 'article', 'Counting vs sorting for an anagram check', 'https://leetcode.com/problems/valid-anagram/discuss/', 'LeetCode Discuss',
+   'Community thread comparing the 26-bucket frequency count with sorting both strings; the O(n) version with no extra array is the one to remember.',
+   'The 26-bucket version lines up with the frequency-table mental model I use for Group Anagrams.', '2026-08-16 08:30:00'),
+  ('res-3', 'p8', 'article', 'Sliding window method, from first principles', 'https://en.wikipedia.org/wiki/Sliding_window_method', 'Wikipedia',
+   'Short reference on why the window only ever moves forward: expand on the right, contract on the left, and keep the best window seen so far.',
+   'Answered "why can the left pointer never go back?" in one paragraph.', '2026-08-20 15:00:00'),
+  ('res-4', 'p5', 'article', 'Binary search boundary cheat sheet', 'https://leetcode.com/problems/binary-search/discuss/', 'LeetCode Discuss',
+   'A table of half-open vs closed interval templates for the four search shapes I keep mixing up.',
+   'Coming back to this one before the review date.', '2026-08-28 11:15:00');

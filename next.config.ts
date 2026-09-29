@@ -1,7 +1,20 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    // YouTube thumbnails for the RESOURCES section. The `Image` usage is
+    // `unoptimized` (see `components/resources/youtube-player.tsx`) because the
+    // Workers runtime has no image optimizer behind `/_next/image`, but the
+    // pattern is declared anyway so the allow-list stays honest if that changes.
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "i.ytimg.com",
+        port: "",
+        pathname: "/vi/**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

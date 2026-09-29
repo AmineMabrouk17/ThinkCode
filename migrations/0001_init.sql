@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS resources (
   type TEXT NOT NULL DEFAULT 'youtube',
   title TEXT NOT NULL,
   url TEXT NOT NULL,
+  creator TEXT,
   description TEXT,
   notes TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
