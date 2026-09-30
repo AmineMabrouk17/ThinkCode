@@ -33,6 +33,14 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # `LayoutProps`, `PageProps` and the route types are generated globals
+      # (src/app/layout.tsx uses `LayoutProps`), so on a clean checkout tsc has
+      # nothing to resolve them against. `next typegen` writes them without
+      # running a full build, which keeps the typecheck step honest instead of
+      # quietly relying on a previous `next build` having left .next behind.
+      - name: Generate route types
+        run: npx next typegen
+
       - name: Typecheck
         run: npm run typecheck
 

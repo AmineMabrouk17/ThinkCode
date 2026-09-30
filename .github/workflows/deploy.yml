@@ -44,6 +44,7 @@ jobs:
       - name: Lint & typecheck
         run: |
           npm run lint
+          npx next typegen   # generates the LayoutProps/PageProps globals
           npm run typecheck
 
       - name: Build
