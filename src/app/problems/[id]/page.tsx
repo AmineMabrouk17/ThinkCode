@@ -9,14 +9,10 @@ import {
   ProblemHeaderActions,
   ProblemStatusControl,
 } from "@/components/problems/problem-header-actions";
-import {
-  ProblemSection,
-  ReadOnlyRows,
-  SectionPlaceholder,
-  type ReadOnlyRowData,
-} from "@/components/problems/problem-sections";
+import { ProblemSection } from "@/components/problems/problem-sections";
 import { AiConversations } from "@/components/resources/ai-conversations";
 import { ResourceSection } from "@/components/resources/resource-section";
+import { ReviewHistorySection } from "@/components/review/review-history-section";
 import { ThinkingSessions } from "@/components/thinking/thinking-sessions";
 import { SolutionSection } from "@/components/solutions/solution-section";
 import { VisualizationSection } from "@/components/visualizations/visualization-section";
@@ -54,16 +50,6 @@ export default async function ProblemDetailPage({
   ]);
 
   if (!problem) notFound();
-
-  const reviewRows: ReadOnlyRowData[] = records.reviews.map((review) => ({
-    id: review.id,
-    title: review.thoughts ?? "Review without notes",
-    meta: `Reviewed ${formatDate(review.reviewed_at)}${
-      review.elapsed_days ? ` · ${review.elapsed_days} days later` : ""
-    }`,
-    badge:
-      review.confidence === null ? "No score" : `Confidence ${review.confidence}/5`,
-  }));
 
   return (
     <div className="flex flex-col gap-7">
@@ -214,18 +200,7 @@ export default async function ProblemDetailPage({
         title="REFLECT"
         hint="How your answer compared with the one you would have given today."
       >
-        {reviewRows.length ? (
-          <ReadOnlyRows
-            items={reviewRows}
-            note="the Review feature adds spaced repetition and old-vs-new reasoning."
-          />
-        ) : (
-          <SectionPlaceholder
-            emoji="🔄"
-            title="Never reviewed"
-            description="Review history & spaced repetition arrive with the Review feature."
-          />
-        )}
+        <ReviewHistorySection problemId={problem.id} reviews={records.reviews} />
       </ProblemSection>
     </div>
   );
