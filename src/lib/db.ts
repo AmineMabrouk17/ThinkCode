@@ -33,6 +33,9 @@ import type {
   ResourceInput,
   Review,
   ReviewDueProblem,
+  ReviewInput,
+  ReviewStats,
+  RecentReview,
   Solution,
   SolutionInput,
   Tag,
@@ -803,6 +806,60 @@ export function listReviews(problemId: string): Promise<Review[]> {
   );
 }
 
+// ---- review mutations ----------------------------------------------
+
+/**
+ * Persist one finished review.
+ *
+ * `nextReviewAt` arrives already normalized by the action
+ * (`YYYY-MM-DD HH:MM:SS` UTC, from `spaced-repetition`) so it keeps sorting
+ * the same way as the `datetime('now')` default, and `elapsedDays` is null on
+ * a problem's very first review. `reviewed_at` is left to the column default —
+ * the server clock is the only clock that should be writing it. Returns the new
+ * row id.
+ */
+export async function insertReview(input: ReviewInput): Promise<string> {
+  const id = crypto.randomUUID();
+
+  await run(
+    `INSERT INTO reviews
+       (id, problem_id, thoughts, confidence, elapsed_days, next_review_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    id,
+    input.problemId,
+    input.thoughts,
+    input.confidence,
+    input.elapsedDays,
+    input.nextReviewAt
+  );
+
+  return id;
+}
+
+/** Review history plus whatever is needed to say *why* a problem is due. */
+export function countReviewsByProblem(problemId: string): Promise<number> {
+  return all<{ n: number }>(
+    "SELECT COUNT(*) AS n FROM reviews WHERE problem_id = ?",
+    problemId
+  ).then((rows) => rows[0]?.n ?? 0);
+}
+
+/** The newest reviews across every problem, with their problem attached. */
+export function listRecentReviews(limit = 10): Promise<RecentReview[]> {
+  return all<RecentReview>(
+    `SELECT r.*,
+            p.title AS problem_title,
+            p.status AS problem_status,
+            p.difficulty AS problem_difficulty,
+            p.category AS problem_category
+     FROM reviews r
+     JOIN problems p ON p.id = r.problem_id
+     ORDER BY r.reviewed_at DESC
+     LIMIT ?`,
+    limit
+  );
+}
+
 export function listSolutions(problemId: string): Promise<Solution[]> {
   return all<Solution>(
     "SELECT * FROM solutions WHERE problem_id = ? ORDER BY created_at DESC",
@@ -1089,6 +1146,23 @@ export function listContinueLearning(limit = 3): Promise<Problem[]> {
 }
 
 /**
+ * "Is this problem due?" — flagged for review in the problem status, or
+ * holding a review whose schedule has come round.
+ *
+ * Written once and reused by both `listProblemsDueForReview` (which lists the
+ * queue) and `getReviewStats` (which counts it), so the dashboard's "reviewing"
+ * badge and the review page's "due now" can never disagree about what due
+ * means.
+ */
+const DUE_FOR_REVIEW_WHERE = `p.status = 'review'
+   OR EXISTS (
+     SELECT 1 FROM reviews r
+     WHERE r.problem_id = p.id
+       AND r.next_review_at IS NOT NULL
+       AND r.next_review_at <= datetime('now')
+   )`;
+
+/**
  * Problems awaiting a revisit: flagged with `status = 'review'` or holding a
  * review whose `next_review_at` has passed. Most overdue first.
  */
@@ -1114,17 +1188,44 @@ export function listProblemsDueForReview(
            AND r.next_review_at <= datetime('now')
        ) AS due_at
      FROM problems p
-     WHERE p.status = 'review'
-        OR EXISTS (
-          SELECT 1 FROM reviews r
-          WHERE r.problem_id = p.id
-            AND r.next_review_at IS NOT NULL
-            AND r.next_review_at <= datetime('now')
-        )
+     WHERE ${DUE_FOR_REVIEW_WHERE}
      ORDER BY due_at IS NULL, COALESCE(due_at, p.updated_at) ASC
      LIMIT ?`,
     limit
   );
+}
+
+/**
+ * The `/review` stats strip, in two queries: one pass over `reviews` for the
+ * totals, and the shared due predicate counted instead of listed.
+ *
+ * These are counts of work done, not a score — there is no streak, no level, and
+ * nothing here to be topped up for the sake of topping it up.
+ */
+export function getReviewStats(): Promise<ReviewStats> {
+  return Promise.all([
+    first<{
+      total: number;
+      problems: number;
+      average: number | null;
+      last: string | null;
+    }>(
+      `SELECT COUNT(*) AS total,
+              COUNT(DISTINCT problem_id) AS problems,
+              AVG(confidence) AS average,
+              MAX(reviewed_at) AS last
+       FROM reviews`
+    ),
+    first<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM problems p WHERE ${DUE_FOR_REVIEW_WHERE}`
+    ),
+  ]).then(([summary, due]) => ({
+    totalReviews: summary?.total ?? 0,
+    reviewedProblems: summary?.problems ?? 0,
+    dueCount: due?.n ?? 0,
+    averageConfidence: summary?.average ?? null,
+    lastReviewedAt: summary?.last ?? null,
+  }));
 }
 
 /** The newest notes across every problem, with their problem titles. */

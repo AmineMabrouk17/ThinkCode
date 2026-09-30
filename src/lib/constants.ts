@@ -206,6 +206,34 @@ export const MAX_MENTAL_MODEL_LENGTH = 2000;
 export const MAX_SIGNALS = 20;
 export const MAX_SIGNAL_LENGTH = 160;
 
+// ---- review -------------------------------------------------------
+
+/** The confidence picker's range: "couldn't start" to "instant". */
+export const MIN_REVIEW_CONFIDENCE = 1;
+export const MAX_REVIEW_CONFIDENCE = 5;
+
+/**
+ * What each score means, in the user's words. Calm on purpose — the scale
+ * measures how much came back today, not how much you should practise.
+ */
+export const REVIEW_CONFIDENCE_LABELS: Record<number, string> = {
+  1: "Couldn’t start",
+  2: "Stumbled through it",
+  3: "Got there, slowly",
+  4: "Solid, with a pause or two",
+  5: "Instant, no hesitation",
+};
+
+/**
+ * A review is a memory workout, and the point of it is the attempt made
+ * *before* peeking. Twenty characters is roughly one honest sentence — enough
+ * to rule out an empty textarea, low enough that nobody is blocked from
+ * starting.
+ */
+export const MIN_REVIEW_THOUGHT_LENGTH = 20;
+
+export const MAX_REVIEW_THOUGHT_LENGTH = 5000;
+
 // ---- knowledge notes ----------------------------------------------
 
 /** The four note flavours of the KNOWLEDGE section, in reading order. */

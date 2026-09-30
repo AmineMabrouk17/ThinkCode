@@ -154,6 +154,102 @@ export interface ReviewDueProblem {
   due_at: string | null;
 }
 
+/** A review joined with enough of its problem to render a history row. */
+export interface RecentReview extends Review {
+  problem_title: string;
+  problem_status: ProblemStatus;
+  problem_difficulty: Difficulty;
+  problem_category: string;
+}
+
+/** The four numbers the `/review` stats strip shows — counts, not a scoreboard. */
+export interface ReviewStats {
+  /** Rows in `reviews`, including repeats of the same problem. */
+  totalReviews: number;
+  /** Distinct problems that have been reviewed at least once. */
+  reviewedProblems: number;
+  /** Problems due right now, from the same predicate as the review queue. */
+  dueCount: number;
+  /** Mean confidence, null when no review scored itself. */
+  averageConfidence: number | null;
+  lastReviewedAt: string | null;
+}
+
+/**
+ * Validated, normalized review payload.
+ *
+ * `elapsedDays` is null on a problem's first review — there is no "12 days
+ * after the last one" to record yet — and `nextReviewAt` is the
+ * `YYYY-MM-DD HH:MM:SS` UTC timestamp the scheduler produced.
+ */
+export interface ReviewInput {
+  problemId: string;
+  thoughts: string;
+  confidence: number;
+  elapsedDays: number | null;
+  nextReviewAt: string;
+}
+
+/** Form fields of the review form that can carry a validation error. */
+export type ReviewField = "thoughts" | "confidence" | "status";
+
+/** Result of `saveReview`, consumed by `useActionState`. */
+export interface ReviewFormState {
+  status: "idle" | "error" | "success";
+  /** General (non field-specific) message. */
+  message?: string;
+  fieldErrors?: Partial<Record<ReviewField, string>>;
+  reviewId?: string;
+  /** Ladder rung the new review landed on — see `spaced-repetition`. */
+  step?: number;
+  /** Gap in days until the next review, for the confirmation panel. */
+  intervalDays?: number;
+  /** `YYYY-MM-DD HH:MM:SS` UTC, rendered with `formatDate`. */
+  nextReviewAt?: string;
+  /** Whole days since the previous review, null on a first review. */
+  elapsedDays?: number | null;
+}
+
+/**
+ * A thinking session reduced to the only thing the recall phase may show:
+ * when it happened, how long it lasted, and never a word of what was written.
+ */
+export interface ReviewPastSession {
+  id: string;
+  /** `YYYY-MM-DD HH:MM:SS` UTC. */
+  startedAt: string;
+  durationSeconds: number;
+}
+
+/** A past thinking session with its thoughts, for the compare phase only. */
+export interface ReviewRevealedSession extends ReviewPastSession {
+  thoughts: string | null;
+}
+
+/**
+ * Everything a review hides until the user commits their own attempt.
+ *
+ * Loaded through `loadReviewReveal` *after* the reveal rather than shipped in
+ * the page payload, so the notes, the solution, and the old thinking are not
+ * sitting in the HTML waiting to be peeked at.
+ */
+export interface ReviewReveal {
+  /** The one past session being compared against, or null when there is none. */
+  session: ReviewRevealedSession | null;
+  notes: Note[];
+  solutions: Solution[];
+  visualizations: Visualization[];
+  /** Calm copy for the case where there is nothing to compare against yet. */
+  message: string;
+}
+
+/** Result of `loadReviewReveal`, consumed by `useActionState`. */
+export interface ReviewRevealState {
+  status: "idle" | "error" | "ready";
+  reveal: ReviewReveal | null;
+  message?: string;
+}
+
 /** A note joined with the title of the problem it belongs to. */
 export interface RecentNote {
   id: string;
