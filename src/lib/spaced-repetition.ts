@@ -145,6 +145,24 @@ export function wholeDaysSince(
 }
 
 /**
+ * The signed version: negative for a date still in the future, `0` for today,
+ * positive for overdue. Null when the timestamp cannot be read.
+ *
+ * `wholeDaysSince` clamps at zero, which is right for "how long since I last
+ * did this" and wrong for "when does this come back" — a schedule three days
+ * out would read as "0 days since", i.e. due now. The queue and the review
+ * history both need to tell those apart.
+ */
+export function daysUntil(value: string | null, now: Date = new Date()): number | null {
+  if (!value) return null;
+
+  const to = parseSqlDate(value);
+  if (!to) return null;
+
+  return Math.floor((to.getTime() - now.getTime()) / DAY_MS);
+}
+
+/**
  * A quiet sentence explaining the schedule a score earned. Shown live under the
  * confidence picker, so the consequence is visible before committing — and, just
  * as importantly, so a low score reads as "closer, not further" rather than as a

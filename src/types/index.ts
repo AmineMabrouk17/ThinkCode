@@ -175,6 +175,20 @@ export interface ReviewStats {
   lastReviewedAt: string | null;
 }
 
+/** Row counts for every table, shown on the Settings page. */
+export interface WorkspaceStats {
+  problems: number;
+  patterns: number;
+  tags: number;
+  notes: number;
+  solutions: number;
+  thinkingSessions: number;
+  resources: number;
+  visualizations: number;
+  reviews: number;
+  aiConversations: number;
+}
+
 /**
  * Validated, normalized review payload.
  *

@@ -207,13 +207,30 @@ If not, remember the current number with its index for future elements.',
    '[{"label":"Brute force","code":"def two_sum(nums, target):\\n    for i in range(len(nums)):\\n        for j in range(i + 1, len(nums)):\\n            if nums[i] + nums[j] == target:\\n                return [i, j]\\n    return []\\n\\n# O(n^2) time, O(1) space"}]',
    '2026-08-15 10:20:00', '2026-08-15 10:20:00');
 
+-- Three reviews of Two Sum, written so that every stored date is exactly the
+-- date `src/lib/spaced-repetition.ts` would have produced. The app recovers a
+-- review's rung from the gap between `reviewed_at` and `next_review_at` — there
+-- is no rung column — so hand-written dates that do not sit on the 1/3/7/14/30
+-- ladder make the history page describe a rung the scheduler never chose.
+--
+--   rev-1  29 Aug  conf 2  (needed the old answer) -> Day 1  -> 30 Aug   +1
+--   rev-2   1 Sep  conf 3  (would get there slowly) -> holds  ->  2 Sep   +1
+--   rev-3  20 Sep  conf 5  (held up without notes)  -> Day 3  -> 23 Sep   +3
+--
+-- Between them they walk all three branches of the ladder, and rev-3 is
+-- overdue as of late September, so `/review` and the dashboard's due badge
+-- have something real to show. `elapsed_days` is the gap since the previous
+-- review, so it is null for the first one, 3 for rev-2 and 19 for rev-3.
 INSERT OR IGNORE INTO reviews (id, problem_id, thoughts, confidence, elapsed_days, reviewed_at, next_review_at) VALUES
   ('rev-1', 'p1',
-   'Remembered the complement trick but hesitated on why sorting fails. Review lesson 2 again.', 3, 3,
-   '2026-09-01 09:30:00', '2026-09-14 09:30:00'),
+   'Blank on the first ten minutes. Reached for the notes before writing anything down — the index tracking is what I lose.', 2, NULL,
+   '2026-08-29 09:30:00', '2026-08-30 09:30:00'),
   ('rev-2', 'p1',
-   'Solved from scratch. Fixed one number, computed the complement, pulled the index from the map.', 5, 10,
-   '2026-09-20 09:30:00', '2026-10-11 09:30:00');
+   'Remembered the complement trick but hesitated on why sorting fails. Went back to lesson 2.', 3, 3,
+   '2026-09-01 09:30:00', '2026-09-02 09:30:00'),
+  ('rev-3', 'p1',
+   'Solved from scratch. Fixed one number, computed the complement, pulled the index from the map — no sorting, no second pass.', 5, 19,
+   '2026-09-20 09:30:00', '2026-09-23 09:30:00');
 
 -- ============================================================
 -- A few more sessions + notes so the lists are not empty

@@ -1596,51 +1596,56 @@ The entire product can be summarized as:
 
 ## Phase 1 — Foundation
 
-* [ ] Project setup
-* [ ] Database
-* [ ] Application layout
-* [ ] Dashboard
-* [ ] Problem CRUD
-* [ ] Tags
-* [ ] Patterns
+* [x] Project setup
+* [x] Database
+* [x] Application layout
+* [x] Dashboard
+* [x] Problem CRUD
+* [x] Tags
+* [x] Patterns
 
 ## Phase 2 — Thinking
 
-* [ ] Thinking timer
-* [ ] Thinking sessions
-* [ ] Initial thoughts
-* [ ] Session history
+* [x] Thinking timer
+* [x] Thinking sessions
+* [x] Initial thoughts
+* [x] Session history
 
 ## Phase 3 — Knowledge
 
-* [ ] Markdown notes
-* [ ] Mental models
-* [ ] Key lessons
-* [ ] Mistakes
-* [ ] Solution editor
+* [x] Markdown notes
+* [x] Mental models
+* [x] Key lessons
+* [x] Mistakes
+* [x] Solution editor
 
 ## Phase 4 — External Resources
 
-* [ ] AI conversation links
-* [ ] YouTube resources
-* [ ] External problem links
-* [ ] Resource notes
+* [x] AI conversation links
+* [x] YouTube resources
+* [x] External problem links
+* [x] Resource notes
 
 ## Phase 5 — Visualization
 
-* [ ] Mermaid
-* [ ] Images
-* [ ] Diagrams
-* [ ] Visualization attachments
+* [x] Mermaid
+* [x] Images
+* [x] Diagrams
+* [x] Visualization attachments
 
 ## Phase 6 — Review
 
-* [ ] Review sessions
-* [ ] Review history
-* [ ] Spaced repetition
-* [ ] Compare old vs new thinking
+* [x] Review sessions
+* [x] Review history
+* [x] Spaced repetition
+* [x] Compare old vs new thinking
 
 ## Phase 7 — Intelligence
+
+Deliberately not built. ThinkCode stores the *links* to your AI conversations
+rather than calling an API, and keeping that line is what makes the rest of the
+app honest: what is in here is what you actually thought, not what a model
+summarised it into.
 
 * [ ] AI-assisted reflection
 * [ ] Automatic summaries
@@ -1766,9 +1771,13 @@ npm run db:migrate:local
 npm run dev
 ```
 
-> The remote D1 database is referenced in `wrangler.jsonc`. Run
-> `wrangler d1 create thinkcode-db`, then paste the printed `database_id`
-> into `wrangler.jsonc` before deploying.
+**Live:** <https://thinkcode.cast-cue.workers.dev>
+
+The D1 `database_id` is already committed in `wrangler.jsonc`, so a fresh clone
+needs nothing copied by hand. Deploying needs two environment variables —
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. See
+[`docs/DEPLOYING.md`](docs/DEPLOYING.md) for the full procedure, the token
+permissions, and the CI setup that deploys on every merge to `main`.
 
 ## Scripts
 
@@ -1792,3 +1801,18 @@ Numbered SQL files live in `migrations/` and are applied in order:
 npm run db:migrate:local   # local miniflare D1
 npm run db:migrate:remote  # remote Cloudflare D1
 ```
+
+Every statement is idempotent (`CREATE TABLE IF NOT EXISTS`, `INSERT OR
+IGNORE`), so re-running a migration is a no-op rather than a duplicate-key
+error. Migrations are applied by hand, not by CI — see
+[`docs/DEPLOYING.md`](docs/DEPLOYING.md) for why.
+
+## Continuous integration
+
+| Workflow | Trigger             | What it does                                          |
+| -------- | ------------------- | ----------------------------------------------------- |
+| `ci.yml` | every push and PR   | lint, typecheck, build — no credentials needed         |
+| `deploy.yml` | push to `main`   | re-runs the gates, deploys, then curls the live worker |
+
+The CI build needs no D1 binding: every data page is `force-dynamic`, so a
+green check on a PR really does mean the build is reproducible anywhere.
