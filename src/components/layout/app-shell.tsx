@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { SearchTrigger } from "@/components/search/search-trigger";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS: { href: string; emoji: string; label: string }[] = [
@@ -70,32 +71,6 @@ function NavLink({
   );
 }
 
-function SearchField() {
-  return (
-    <div className="relative w-full max-w-xs">
-      <svg
-        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <circle cx="11" cy="11" r="8" />
-        <path d="m21 21-4.3-4.3" />
-      </svg>
-      <input
-        type="search"
-        placeholder="Search your knowledge base…"
-        aria-label="Search (coming soon)"
-        className="h-9 w-full rounded-lg border border-border bg-surface pl-9 pr-3 text-sm text-ink placeholder:text-muted/60 focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/25"
-      />
-    </div>
-  );
-}
-
 function HeaderBar() {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-md">
@@ -104,10 +79,10 @@ function HeaderBar() {
           <Brand />
         </div>
         <div className="hidden flex-1 lg:block">
-          <SearchField />
+          <SearchTrigger className="max-w-xs" />
         </div>
         <div className="flex items-center gap-2 lg:hidden">
-          <SearchField />
+          <SearchTrigger className="max-w-44" />
         </div>
         <div className="hidden items-center gap-2 sm:flex">
           <span

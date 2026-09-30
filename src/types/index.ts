@@ -250,6 +250,57 @@ export interface ReviewRevealState {
   message?: string;
 }
 
+// ---- global search --------------------------------------------------
+
+/** A problem matching the palette's query. */
+export interface ProblemSearchHit {
+  id: string;
+  title: string;
+  platform: string;
+  category: string;
+  difficulty: Difficulty;
+  status: ProblemStatus;
+}
+
+/** A note matching the palette's query, with a plain-text excerpt. */
+export interface NoteSearchHit {
+  id: string;
+  problem_id: string;
+  title: string;
+  type: NoteType;
+  updated_at: string;
+  /** First 260 characters of the body, markdown unstripped. */
+  excerpt: string;
+  problem_title: string;
+}
+
+/** A pattern matching the palette's query. */
+export interface PatternSearchHit {
+  id: string;
+  slug: string;
+  name: string;
+  category: string;
+  description: string | null;
+}
+
+export type SearchHit = ProblemSearchHit | NoteSearchHit | PatternSearchHit;
+
+/** One kind of result in the palette, so the client groups without reshaping. */
+export interface SearchGroup {
+  kind: "problem" | "note" | "pattern";
+  label: string;
+  items: SearchHit[];
+}
+
+/** Everything `/api/search` answers with. */
+export interface GlobalSearchResults {
+  term: string;
+  groups: SearchGroup[];
+  total: number;
+  /** True when at least one kind hit its per-kind cap. */
+  truncated?: boolean;
+}
+
 /** A note joined with the title of the problem it belongs to. */
 export interface RecentNote {
   id: string;

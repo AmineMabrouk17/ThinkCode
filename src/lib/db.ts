@@ -12,22 +12,27 @@ import type {
   AiConversation,
   AiConversationInput,
   DashboardData,
+  GlobalSearchResults,
   Note,
   NoteFilters,
   NoteInput,
+  NoteSearchHit,
   NoteType,
   NoteTypeCounts,
   NoteWithProblem,
   Pattern,
   PatternInput,
+  PatternSearchHit,
   PatternWithCount,
   Problem,
   ProblemFilters,
   ProblemInput,
   ProblemRecords,
+  ProblemSearchHit,
   ProblemStatus,
   ProblemStatusCounts,
   ProblemWithMeta,
+  SearchGroup,
   RecentNote,
   Resource,
   ResourceInput,
@@ -537,6 +542,107 @@ export function listPatternCategories(): Promise<string[]> {
   return all<{ category: string }>(
     "SELECT DISTINCT category FROM patterns WHERE category <> '' ORDER BY category COLLATE NOCASE"
   ).then((rows) => rows.map((row) => row.category));
+}
+
+// ---- global search --------------------------------------------------
+
+/** `%term%` with the LIKE wildcards escaped, so a literal `%` finds nothing. */
+function searchLike(term: string): string {
+  return `%${term.toLowerCase().replace(/[\\%_]/g, "\\$&")}%`;
+}
+
+/** Cap per kind so one huge table cannot crowd out the others. */
+const SEARCH_LIMIT_PER_KIND = 6;
+
+/**
+ * One search across problems, knowledge notes and patterns.
+ *
+ * Three `LIKE '%…%'` scans in parallel, which is the honest trade here: this is
+ * a single learner's workspace, the tables are indexed on the columns that get
+ * filtered rather than searched, and a three-way scan over a few hundred rows is
+ * far below the threshold where a real search index would be worth its upkeep.
+ * Escaping keeps a `%` or `_` typed into the palette literal.
+ *
+ * `notes` and `patterns` both match on their body text, because the whole point
+ * of the palette is that you remember *what you wrote*, not the title you gave
+ * it.
+ */
+export function searchEverything(term: string): Promise<GlobalSearchResults> {
+  const trimmed = term.trim();
+  if (trimmed.length < 2) {
+    return Promise.resolve({ term: trimmed, groups: [], total: 0 });
+  }
+
+  const like = searchLike(trimmed);
+
+  return Promise.all([
+    all<ProblemSearchHit>(
+      `SELECT id, title, platform, category, difficulty, status
+       FROM problems
+       WHERE LOWER(title) LIKE ? ESCAPE '\\'
+          OR LOWER(COALESCE(description, '')) LIKE ? ESCAPE '\\'
+          OR LOWER(category) LIKE ? ESCAPE '\\'
+       ORDER BY
+         CASE WHEN LOWER(title) LIKE ? ESCAPE '\\' THEN 0 ELSE 1 END,
+         LOWER(title)
+       LIMIT ?`,
+      like,
+      like,
+      like,
+      `${trimmed.toLowerCase()}%`,
+      SEARCH_LIMIT_PER_KIND
+    ),
+    all<NoteSearchHit>(
+      `SELECT n.id, n.problem_id, n.title, n.type, n.updated_at,
+              substr(n.content, 1, 260) AS excerpt,
+              p.title AS problem_title
+       FROM notes n
+       JOIN problems p ON p.id = n.problem_id
+       WHERE LOWER(n.title) LIKE ? ESCAPE '\\' OR LOWER(n.content) LIKE ? ESCAPE '\\'
+       ORDER BY n.updated_at DESC
+       LIMIT ?`,
+      like,
+      like,
+      SEARCH_LIMIT_PER_KIND
+    ),
+    all<PatternSearchHit>(
+      `SELECT p.id, p.slug, p.name, p.category, p.description
+       FROM patterns p
+       WHERE LOWER(p.name) LIKE ? ESCAPE '\\'
+          OR LOWER(COALESCE(p.mental_model, '')) LIKE ? ESCAPE '\\'
+          OR LOWER(COALESCE(p.description, '')) LIKE ? ESCAPE '\\'
+       ORDER BY
+         CASE WHEN LOWER(p.name) LIKE ? ESCAPE '\\' THEN 0 ELSE 1 END,
+         LOWER(p.name)
+       LIMIT ?`,
+      like,
+      like,
+      like,
+      `${trimmed.toLowerCase()}%`,
+      SEARCH_LIMIT_PER_KIND
+    ),
+  ]).then(([problems, notes, patterns]) => {
+    const groups: SearchGroup[] = [];
+
+    if (problems.length) {
+      groups.push({ kind: "problem", label: "Problems", items: problems });
+    }
+    if (notes.length) {
+      groups.push({ kind: "note", label: "Knowledge", items: notes });
+    }
+    if (patterns.length) {
+      groups.push({ kind: "pattern", label: "Patterns", items: patterns });
+    }
+
+    return {
+      term: trimmed,
+      groups,
+      total: problems.length + notes.length + patterns.length,
+      truncated: [problems, notes, patterns].some(
+        (rows) => rows.length === SEARCH_LIMIT_PER_KIND
+      ),
+    };
+  });
 }
 
 export function getPatternBySlug(slug: string): Promise<Pattern | null> {
