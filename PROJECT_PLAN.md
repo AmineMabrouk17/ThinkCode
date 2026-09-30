@@ -15,5 +15,5 @@ Each feature: dedicated branch → subagent implementation → PR → validate �
 - [x] feat/8-resources — AI conversation links + YouTube resources
 - [x] feat/9-visualizations — Mermaid diagram visualizations
 - [x] feat/10-review — Review system: sessions, history, spaced repetition, compare old vs new
-- [ ] feat/11-search — Global search across problems, notes, patterns
+- [x] feat/11-search — Global search across problems, notes, patterns
 - [ ] feat/12-deploy — Cloudflare deploy config, CI, final polish, docs
