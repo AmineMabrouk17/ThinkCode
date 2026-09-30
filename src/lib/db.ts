@@ -47,6 +47,7 @@ import type {
   TagWithCount,
   ThinkingSession,
   ThinkingSessionInput,
+  WorkspaceStats,
   Visualization,
   VisualizationInput,
 } from "@/types";
@@ -85,6 +86,20 @@ async function run(sql: string, ...bind: unknown[]): Promise<D1Result> {
 function placeholders(values: readonly string[]): string {
   return values.length ? values.map(() => "?").join(", ") : "NULL";
 }
+
+/** The zeroed shape, so the Settings page renders on a brand-new database. */
+const EMPTY_WORKSPACE_STATS: WorkspaceStats = {
+  problems: 0,
+  patterns: 0,
+  tags: 0,
+  notes: 0,
+  solutions: 0,
+  thinkingSessions: 0,
+  resources: 0,
+  visualizations: 0,
+  reviews: 0,
+  aiConversations: 0,
+};
 
 // ---- problems ----------------------------------------------------
 
@@ -1223,6 +1238,29 @@ export function deleteResource(
 }
 
 // ---- dashboard ----------------------------------------------------
+
+/**
+ * How much of each thing the workspace holds, for the Settings page.
+ *
+ * One query with scalar subqueries rather than nine round-trips: D1 charges
+ * per query and per row read, and "how big is my workspace" is the kind of
+ * question that should cost almost nothing to answer.
+ */
+export function getWorkspaceStats(): Promise<WorkspaceStats> {
+  return first<WorkspaceStats>(
+    `SELECT
+       (SELECT COUNT(*) FROM problems)          AS problems,
+       (SELECT COUNT(*) FROM patterns)          AS patterns,
+       (SELECT COUNT(*) FROM tags)              AS tags,
+       (SELECT COUNT(*) FROM notes)             AS notes,
+       (SELECT COUNT(*) FROM solutions)         AS solutions,
+       (SELECT COUNT(*) FROM thinking_sessions) AS thinkingSessions,
+       (SELECT COUNT(*) FROM resources)         AS resources,
+       (SELECT COUNT(*) FROM visualizations)    AS visualizations,
+       (SELECT COUNT(*) FROM reviews)           AS reviews,
+       (SELECT COUNT(*) FROM ai_conversations)  AS aiConversations`
+  ).then((row) => row ?? EMPTY_WORKSPACE_STATS);
+}
 
 /** One aggregated query instead of one count per status. */
 export function countProblemsByStatus(): Promise<ProblemStatusCounts> {

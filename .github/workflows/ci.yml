@@ -1,0 +1,48 @@
+# Verifies every push and PR. Deliberately has no Cloudflare credentials:
+# the build must stay green on a laptop with no D1 binding at all, which is the
+# only way the check is worth having. All data pages are `force-dynamic`, so
+# nothing here touches the database.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: lint, typecheck, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # `LayoutProps`, `PageProps` and the route types are generated globals
+      # (src/app/layout.tsx uses `LayoutProps`), so on a clean checkout tsc has
+      # nothing to resolve them against. `next typegen` writes them without
+      # running a full build, which keeps the typecheck step honest instead of
+      # quietly relying on a previous `next build` having left .next behind.
+      - name: Generate route types
+        run: npx next typegen
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build

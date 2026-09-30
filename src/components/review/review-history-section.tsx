@@ -9,9 +9,28 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { REVIEW_CONFIDENCE_LABELS } from "@/lib/constants";
-import { REVIEW_INTERVAL_DAYS, stepFromSchedule } from "@/lib/spaced-repetition";
+import {
+  REVIEW_INTERVAL_DAYS,
+  daysUntil,
+  stepFromSchedule,
+} from "@/lib/spaced-repetition";
 import { formatDate } from "@/lib/utils";
 import type { Review } from "@/types";
+
+/**
+ * What to call a scheduled date, from the point of view of the person reading
+ * it: still ahead, today, or already past. Only the *newest* review's date can
+ * be in the future — an older row was superseded the moment the next review
+ * happened — which is why "was due" and "next due" are both needed here.
+ */
+function dueLabel(nextReviewAt: string): string {
+  const days = daysUntil(nextReviewAt);
+
+  if (days === null) return `due ${formatDate(nextReviewAt)}`;
+  if (days > 0) return `next due ${formatDate(nextReviewAt)}`;
+  if (days === 0) return "due now";
+  return `was due ${formatDate(nextReviewAt)}`;
+}
 
 /**
  * The REFLECT section of a problem page: every review you have logged, and the
@@ -105,9 +124,7 @@ function ReviewHistoryCard({ review }: { review: Review }) {
 
           {review.next_review_at ? (
             <span className="text-xs text-muted">
-              {review.next_review_at <= new Date().toISOString().slice(0, 19).replace("T", " ")
-                ? "due now"
-                : `was due ${formatDate(review.next_review_at)}`}
+              {dueLabel(review.next_review_at)}
               {rung ? ` · ${rung}-day rung` : ""}
             </span>
           ) : null}

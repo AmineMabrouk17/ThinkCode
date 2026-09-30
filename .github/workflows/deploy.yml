@@ -1,0 +1,75 @@
+# Deploys the OpenNext worker to Cloudflare Workers, then proves it answers.
+#
+# The token is a GitHub secret and never appears in the log: `wrangler deploy`
+# reads CLOUDFLARE_API_TOKEN from the environment, and GitHub masks the value in
+# output. The D1 `database_id` is *not* a secret and is committed in
+# `wrangler.jsonc`.
+#
+# Migrations are intentionally NOT run here. A schema change should be applied
+# deliberately (`npm run db:migrate:remote`) and reviewed on its own, rather than
+# being a side effect of someone merging a UI fix. `wrangler d1 migrations apply`
+# tracks state per file; this project's migrations are hand-ordered and
+# idempotent, so running them by hand is the honest workflow for now.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  # One deploy at a time. Never cancel a running one: a half-uploaded worker is
+  # worse than a slightly stale one, and `wrangler deploy` uploads assets before
+  # switching the version.
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: build & deploy to Cloudflare
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint & typecheck
+        run: |
+          npm run lint
+          npx next typegen   # generates the LayoutProps/PageProps globals
+          npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy
+        run: npm run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Smoke test the live worker
+        run: |
+          url="https://thinkcode.cast-cue.workers.dev"
+          # The worker needs a moment to propagate to every colo, so retry
+          # rather than reporting a deploy as broken because a request landed
+          # mid-rollout.
+          for path in / /problems /review "/api/search?q=two"; do
+            ok=0
+            for attempt in 1 2 3 4 5 6; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' "$url$path" || true)
+              if [ "$code" = "200" ]; then ok=1; break; fi
+              echo "attempt $attempt: $path -> $code"
+              sleep 5
+            done
+            [ "$ok" = "1" ] || { echo "::error::$path did not return 200"; exit 1; }
+            echo "$path -> 200"
+          done
