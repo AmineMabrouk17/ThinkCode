@@ -20,9 +20,11 @@
 		{
 			"binding": "DB",
 			"database_name": "thinkcode-db",
-			// TODO: create the remote database with `wrangler d1 create thinkcode-db`
-			// and replace this placeholder ID with the real one.
-			"database_id": "73abacce-b3ee-4901-8b34-719bf3173c8a"
+			// Created with `wrangler d1 create thinkcode-db`. This ID is safe to
+			// commit: it is a resource identifier, not a credential. The API token
+			// that talks to it lives in the environment (and in the repo's GitHub
+			// secrets), never in this file.
+			"database_id": "a5361ce7-0ea3-433d-a2ff-9c87332585b5"
 		}
 	]
 }
